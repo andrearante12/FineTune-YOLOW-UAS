@@ -27,6 +27,7 @@ def yolo_to_coco(img_dir, label_dir, output_json, classes):
             with open(label_path, 'r') as f:
                 for line in f:
                     cls, x_c, y_c, w, h = map(float, line.split())
+                    
                     # Convert YOLO (normalized) to COCO (absolute pixel x, y, w, h)
                     abs_w = w * width
                     abs_h = h * height
