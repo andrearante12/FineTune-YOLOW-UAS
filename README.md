@@ -11,7 +11,6 @@ to the COCO dataset format, and setting up the corresponding YOLO-World config f
 * [Setup](#Setup)
 * [Enviorment Setup for Finetuning](./docs/INSTALLATION-FINETUNE.md)
 * [Results](./docs/RESULTS.md)
-* [Evaluation Guide](./docs/EVALUATION.md)
 
 ## Requirements
 

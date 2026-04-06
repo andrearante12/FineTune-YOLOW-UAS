@@ -3,7 +3,7 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 from ultralytics import YOLOWorld
 
 def main():
-    # 1. Load the YOLOWorld (medium) checkpoint
+    # 1. Load the YOLOWorld (medium) checkpoint 
     model = YOLOWorld('yolov8m-worldv2.pt')
 
     # 2. Freeze the text encoder (the "Language Brain")
@@ -19,15 +19,14 @@ def main():
     # 4. Launch the Optimized Training
     model.train(
         data='datasets/VisDrone/data.yaml',
-        epochs=80,
-        imgsz=1280,
-        batch=24,
-        lr0=2e-4,
-        weight_decay=0.05,
-        warmup_epochs=3,
-        amp=True,
-        device=[0, 1],
-        save_period=5,
+        epochs=40,               
+        imgsz=1280,              
+        batch=24,               
+        lr0=2e-4,               
+        weight_decay=0.05,       
+        warmup_epochs=3,        
+        amp=True,                
+        device=[0, 1],          
         project='runs/VisDrone_NewPath',
         name='yolo_world_80epoch'
     )
