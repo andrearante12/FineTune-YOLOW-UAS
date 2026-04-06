@@ -1,0 +1,6 @@
+epoch,lr,visdrone_mAP50,visdrone_mAP50-95,openvocab_mAP,openvocab_mAP50,ov_ratio_to_base,ov_best,ov_patience,box_loss,cls_loss,dfl_loss,status
+0,0.0001,,,0.0338,0.0513,1.0000,0.0338,0,,,,base_reference
+1,0.0001,0.4367,0.2688,0.0331,0.0541,0.9782,0.0338,1,0.0000,0.0000,0.0000,training
+2,0.0001,0.4526,0.2771,0.0292,0.0496,0.8642,0.0338,2,0.0000,0.0000,0.0000,training
+3,0.0001,0.4722,0.2922,0.0315,0.0542,0.9319,0.0338,3,0.0000,0.0000,0.0000,no_improvement_3_epochs
+3,0.0001,0.4722,0.2924,0.0315,0.0542,0.9319,0.0338,4,0.0000,0.0000,0.0000,no_improvement_3_epochs

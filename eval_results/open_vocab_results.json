@@ -1,0 +1,101 @@
+{
+  "Base (yolov8m-worldv2)": {
+    "metrics": {
+      "mAP": 0.03379312042821895,
+      "mAP_50": 0.051291218726650226,
+      "mAP_75": 0.04627971263131099,
+      "mAP_small": 0.0,
+      "mAP_medium": 0.00014084049590339806,
+      "mAP_large": 0.03885247412091402
+    },
+    "per_class": {
+      "backpack": 0.0,
+      "car": 0.0,
+      "dog": 9.433375770009431e-06,
+      "foreign object on driveway": 0.0,
+      "foreign object on orange circle landing pad": 0.27003584295277777,
+      "orange circle landing pad": 0.0,
+      "pedestrian": 0.00029968709720384364,
+      "soccer ball": 0.0
+    },
+    "fps": 52.14987505608624,
+    "num_predictions": 11157,
+    "weights": "yolov8m-worldv2.pt",
+    "classes": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ]
+  },
+  "Fine-tuned (5 epoch)": {
+    "metrics": {
+      "mAP": 0.033805394536547184,
+      "mAP_50": 0.05470843377864954,
+      "mAP_75": 0.039390233788135005,
+      "mAP_small": 0.0,
+      "mAP_medium": 0.004199734520848256,
+      "mAP_large": 0.04627415955248711
+    },
+    "per_class": {
+      "backpack": 0.0021592030071262303,
+      "car": 0.0,
+      "dog": 0.002596224635080243,
+      "foreign object on driveway": 0.000732044719977722,
+      "foreign object on orange circle landing pad": 0.26017732990335046,
+      "orange circle landing pad": 1.6086092768496995e-06,
+      "pedestrian": 0.004776745417565937,
+      "soccer ball": 0.0
+    },
+    "fps": 60.63090174951986,
+    "num_predictions": 49257,
+    "weights": "5_epoch.pt",
+    "classes": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ]
+  },
+  "Fine-tuned (40 epoch)": {
+    "metrics": {
+      "mAP": 0.01736525606168592,
+      "mAP_50": 0.027456710805882356,
+      "mAP_75": 0.018569329266694235,
+      "mAP_small": 0.0,
+      "mAP_medium": 0.002191884534182235,
+      "mAP_large": 0.024152502086757843
+    },
+    "per_class": {
+      "backpack": 2.06909871950117e-05,
+      "car": 0.0,
+      "dog": 0.001995893061197815,
+      "foreign object on driveway": 0.0,
+      "foreign object on orange circle landing pad": 0.12878569554954644,
+      "orange circle landing pad": 1.8267509407767344e-06,
+      "pedestrian": 0.008117942144607308,
+      "soccer ball": 0.0
+    },
+    "fps": 60.711097419985784,
+    "num_predictions": 23431,
+    "weights": "runs/detect/runs/VisDrone_NewPath/yolo_world_balanced/weights/best.pt",
+    "classes": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ]
+  }
+}

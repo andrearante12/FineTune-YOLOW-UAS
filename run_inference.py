@@ -1,13 +1,14 @@
 from ultralytics import YOLOWorld
 
 # Baseline Medium Model Weights
-#model = YOLOWorld('yolov8m-worldv2.pt')
+model = YOLOWorld('yolov8m-worldv2.pt')
 
 # Baseline X-Large Model Weights
 #model = YOLOWorld('yolov8x-worldv2.pt')
 
 # Fine-Tuned for 5 epochs while freezing CLIP encoder
-model = YOLOWorld('runs/detect/runs/VisDrone_Research/yolo_world_preserved/weights/best.pt')
+# model = YOLOWorld('runs/detect/runs/VisDrone_Research/yolo_world_preserved/weights/best.pt')
+
 
 # Fine-Tuned for 40 epochs while freezing CLIP encoder
 #model = YOLOWorld('runs/detect/runs/VisDrone_NewPath/yolo_world_balanced/weights/best.pt')
@@ -19,6 +20,7 @@ model = YOLOWorld('runs/detect/runs/VisDrone_Research/yolo_world_preserved/weigh
 target_classes = [
     "orange circle landing pad",        
     "backpack", 
+    # "dog",
     "pedestrian",                                   # VisDrone categroy
     "car",                                          # VisDrone category
     "soccer ball",      
@@ -29,7 +31,7 @@ model.set_classes(target_classes)
 
 # 3. Run inference
 results = model.predict(
-    source='VID_01.mp4', 
+    source='VID_01.MP4', 
     imgsz=1280,      
     conf=0.10,       
     save=True,       # Automatically saves plotted video to runs/detect/predict/

@@ -125,3 +125,22 @@ work_dirs
 # venus
 venus_run.sh
 
+# Large video files
+*.avi
+*.mp4
+*.MP4
+*.mov
+*.mkv
+
+# Dataset images (too large for git)
+datasets/OpenVocab/images/
+datasets/VisDrone/
+train/
+
+# Model weights (keep 5_epoch.pt)
+*.pt
+!5_epoch.pt
+
+# Archives
+*.zip
+

@@ -73,7 +73,14 @@ def main():
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
     # the dataset_meta is loaded from the checkpoint and
     # then pass to the model in init_detector
-    visualizer.dataset_meta = model.dataset_meta
+
+    # Modify to only detect classes from prompt
+    # visualizer.dataset_meta = model.dataset_meta # original
+    # Update visualizer metadata to match your custom prompt
+    visualizer.dataset_meta = {
+        'classes': [t[0] for t in texts if t[0] != ' '],
+        'palette': model.dataset_meta.get('palette', None)
+    }
 
     video_reader = mmcv.VideoReader(args.video)
     video_writer = None
@@ -83,7 +90,7 @@ def main():
             args.out, fourcc, video_reader.fps,
             (video_reader.width, video_reader.height))
 
-    for frame in track_iter_progress(video_reader):
+    for frame in track_iter_progress(list(video_reader)):
         result = inference_detector(model,
                                     frame,
                                     texts,

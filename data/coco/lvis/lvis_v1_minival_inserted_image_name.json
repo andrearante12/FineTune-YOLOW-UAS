@@ -1,0 +1,40 @@
+{
+  "info": {"description": "LVIS minival"},
+  "images": [
+    {
+      "id": 1,
+      "file_name": "dummy.jpg",
+      "coco_url": "",
+      "height": 480,
+      "width": 640,
+      "date_captured": "",
+      "flickr_url": "",
+      "license": 0,
+      "not_exhaustive_category_ids": [],
+      "neg_category_ids": []
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1,
+      "image_id": 1,
+      "category_id": 1,
+      "bbox": [0, 0, 10, 10],
+      "area": 100,
+      "segmentation": [],
+      "iscrowd": 0
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "person",
+      "supercategory": "person",
+      "synonyms": [],
+      "def": "",
+      "frequency": "f",
+      "image_count": 1,
+      "instance_count": 1
+    }
+  ]
+}

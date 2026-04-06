@@ -1,0 +1,5 @@
+epoch,lr,visdrone_mAP50,visdrone_mAP50-95,ov_weighted_mAP,ov_overall_mAP,ov_ratio_to_base,ov_best,ov_patience,ov_dog,ov_foreign object on orange circle landing pad,status
+0,5e-05,,,0.1660,0.0338,1.0000,0.1660,0,0.0000,0.2700,base_reference
+1,5e-05,0.4424,0.2710,0.1673,0.0355,1.0073,0.1673,0,0.0000,0.2720,training
+2,5e-05,0.4349,0.2676,0.0990,0.0226,0.5961,0.1673,1,0.0019,0.1598,ov_ratio_59.61%_below_70%
+2,5e-05,0.4423,0.2712,0.0990,0.0226,0.5961,0.1673,2,0.0019,0.1598,ov_ratio_59.61%_below_70%

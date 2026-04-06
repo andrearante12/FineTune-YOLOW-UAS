@@ -5,63 +5,61 @@
 The goal of this project was to fine-tune the YOLO World open vocabulary object detection model (https://github.com/AILab-CVC/YOLO-World) with the VisDrone dataset 
 (https://github.com/VisDrone/VisDrone-Dataset) in order to achieve better, real-time performance on a UAS system. This process required converting the VisDrone
 dataset to the appropriate format including a data.yaml file, running a conversion script the converted the annotations from the default custom `.txt` format
-to the YOLO PyTorch format, and setting up the corresponding YOLO-World config files. 
+to the COCO dataset format, and setting up the corresponding YOLO-World config files. 
 
 ## 📖 Table of Contents
 * [Setup](#Setup)
-* [Installation & Setup](#installation--setup)
-* [Results](RESULTS.md)
+* [Enviorment Setup for Finetuning](./docs/INSTALLATION-FINETUNE.md)
+* [Results](./docs/RESULTS.md)
+* [Evaluation Guide](./docs/EVALUATION.md)
 
-# Setup
+## Requirements
 
-## Activate the enviornment
+The model was finetuned on a system with the following specs:
+* **GPU:** 2x NVIDIA RTX 5090 (32GB)
+* **CPU:** AMD Threadripper PRO 7955WX (16C/32T)
+* **RAM:** 512GB DDR5
+* **OS:** Ubuntu 22.04 LTS
+* **Software:** CUDA 12.8, PyTorch 2.12.0 
 
-```
-conda activate yoloworld_stable
-```
-## Converting the dataset
+## Setup
 
-The VisDrone dataset must be converted into the standard YOLO format, pictured below
-```
-datasets/VisDrone/
-├── data.yaml
-├── images/
-│   ├── train/
-│   └── val/
-└── labels/
-    ├── train/
-    └── val/
-```
 
-The format for data.yaml is
+
+* [Enviornment Setup for Finetuning](./docs/INSTALLATION-FINETUNE.md)
+
+
+## Inference
+
+Run from the root dir to perform inference.
 ```
-path: /mnt/andre/YOLO-World/datasets/VisDrone
-train: images/train
-val: images/val
-names:
-  0: pedestrian
-  1: people
-  2: bicycle
-  3: car
-  4: van
-  5: truck
-  6: tricycle
-  7: awning-tricycle
-  8: bus
-  9: motor
+python run_inference.py
 ```
 
-## Example command to run inference with config/weights on a .mp4 file 
-```
-# Ensure you are in the YOLO-World root directory
-PYTHONPATH=. python demo/video_demo.py \
-    configs/pretrain/yolo_world_v2_x_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py \
-    weights/yolo_world_v2_x_obj365v1_goldg_cc3mlite_pretrain_1280ft-14996a36.pth \
-    VID_01.mp4 \
-    "person, backpack, soccer ball, landing pad" \
-    --score-thr 0.05 \
-    --out video_outputs/VID_01_detected.mp4 \
-    --device cuda:0
-```
+To modify the target video adjust this section in ./run_inference.py. This example runs on VID_01.mp4 and detects target classes defined below.
 
+```
+# Descriptive Classes
+target_classes = [
+    "orange circle landing pad",        
+    "backpack", 
+    "pedestrian",                                  
+    "car",                                          
+    "soccer ball",      
+    "foreign object on driveway",                    
+    "foreign object on orange circle landing pad"  
+]
+model.set_classes(target_classes)
+
+results = model.predict(
+    source='VID_01.mp4', 
+    imgsz=1280,      
+    conf=0.10,       
+    save=True,       # Automatically saves plotted video to runs/detect/predict/
+    device=0,        
+    project='runs/inference',
+    name='drone_test_native'
+)
+```
+ 
 
