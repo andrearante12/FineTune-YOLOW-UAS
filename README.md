@@ -11,6 +11,8 @@ to the COCO dataset format, and setting up the corresponding YOLO-World config f
 * [Setup](#Setup)
 * [Enviorment Setup for Finetuning](./docs/INSTALLATION-FINETUNE.md)
 * [Results](./docs/RESULTS.md)
+* [Evaluation Guide](./docs/EVALUATION.md)
+* [Project Scripts](#project-scripts)
 
 ## Requirements
 
@@ -32,10 +34,10 @@ The model was finetuned on a system with the following specs:
 
 Run from the root dir to perform inference.
 ```
-python run_inference.py
+python scripts/run_inference.py
 ```
 
-To modify the target video adjust this section in ./run_inference.py. This example runs on VID_01.mp4 and detects target classes defined below.
+To modify the target video adjust this section in ./scripts/run_inference.py. This example runs on VID_01.mp4 and detects target classes defined below.
 
 ```
 # Descriptive Classes
@@ -60,5 +62,22 @@ results = model.predict(
     name='drone_test_native'
 )
 ```
- 
 
+## Project Scripts
+
+All custom scripts are in the `scripts/` directory. Run from the repo root.
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/finetune.py` | Fine-tune YOLOWorld on VisDrone with frozen CLIP encoder |
+| `scripts/run_inference.py` | Video inference with custom descriptive class prompts |
+| `scripts/yolo_world_jetson.py` | Real-time inference on NVIDIA Jetson |
+| `scripts/evaluate.py` | Closed-vocab VisDrone evaluation (COCO mAP) |
+| `scripts/evaluate_open_vocab.py` | Open-vocab evaluation on novel classes |
+| `scripts/sweep_checkpoints.py` | Evaluate multiple checkpoints across hyperparameters |
+| `scripts/convert_visdrone.py` | Convert VisDrone annotations to YOLO format |
+| `scripts/yolo_to_coco.py` | Convert YOLO labels to COCO JSON |
+| `scripts/verify_coco_format.py` | Validate COCO annotation format |
+| `scripts/extract_frames.py` | Extract frames from video for dataset creation |
+| `scripts/fix_embeddings.py` | Generate text embeddings for class names |
+| `scripts/test_frozen_weights.py` | Inspect checkpoint metadata |

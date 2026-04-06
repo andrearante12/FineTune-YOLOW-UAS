@@ -15,7 +15,7 @@ Both scripts require:
 
 ## VisDrone Evaluation (Closed-Vocab)
 
-**Script:** `evaluate.py`
+**Script:** `scripts/evaluate.py`
 
 Measures how well each model detects the 10 VisDrone classes (pedestrian, people, bicycle, car, van, truck, tricycle, awning-tricycle, bus, motor). This proves that fine-tuning improved drone-imagery detection.
 
@@ -31,28 +31,28 @@ datasets/VisDrone/
 
 If `val.json` doesn't exist yet, generate it:
 ```bash
-python yolo_to_coco.py
+python scripts/yolo_to_coco.py
 ```
 
 ### Usage
 
 ```bash
 # Auto-discovers all available model checkpoints
-python evaluate.py
+python scripts/evaluate.py
 
 # Evaluate a specific fine-tuned model
-python evaluate.py --finetuned-weights 5_epoch.pt
+python scripts/evaluate.py --finetuned-weights 5_epoch.pt
 
 # Custom paths
-python evaluate.py --val-images path/to/images --val-ann path/to/val.json
+python scripts/evaluate.py --val-images path/to/images --val-ann path/to/val.json
 
 # CPU-only
-python evaluate.py --device cpu
+python scripts/evaluate.py --device cpu
 ```
 
 ## Open-Vocab Evaluation
 
-**Script:** `evaluate_open_vocab.py`
+**Script:** `scripts/evaluate_open_vocab.py`
 
 Measures how well each model detects open-vocabulary classes (landing pads, backpacks, foreign objects, etc.) that were NOT in the VisDrone training set. This quantifies how much open-vocab capability was retained after fine-tuning.
 
@@ -78,13 +78,13 @@ datasets/OpenVocab/
 
 ```bash
 # Auto-reads classes from annotation file
-python evaluate_open_vocab.py
+python scripts/evaluate_open_vocab.py
 
 # Custom dataset location
-python evaluate_open_vocab.py --val-images path/to/images --val-ann path/to/val.json
+python scripts/evaluate_open_vocab.py --val-images path/to/images --val-ann path/to/val.json
 
 # Override with descriptive text prompts (order must match category_id in annotations)
-python evaluate_open_vocab.py --classes "orange circle landing pad" "backpack" "soccer ball"
+python scripts/evaluate_open_vocab.py --classes "orange circle landing pad" "backpack" "soccer ball"
 ```
 
 The `--classes` flag is useful when your Roboflow label names differ from the descriptive prompts you want YOLO-World to use. The script prints the class-to-category mapping so you can verify alignment.
