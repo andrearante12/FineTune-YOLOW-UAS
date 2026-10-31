@@ -3,12 +3,19 @@
 # interpolate each run's final weights with the base model, evaluate every alpha,
 # then pick alpha by VisDrone mAP only (select_wise_alpha.py) and report OVB
 # mean +- std across seeds. Run from run_queue.sh as a "!" step after the seeds.
+# Usage: scripts/wise_seeds.sh [summary.json run1 run2 ...]
+#        (default: eval_results/wise_seeds_summary.json paper_e5 paper_e5_s1 paper_e5_s2)
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
 
+summary="${1:-eval_results/wise_seeds_summary.json}"
+shift || true
+runs=("$@")
+[[ ${#runs[@]} -gt 0 ]] || runs=(paper_e5 paper_e5_s1 paper_e5_s2)
+
 results=()
-for run in paper_e5 paper_e5_s1 paper_e5_s2; do
+for run in "${runs[@]}"; do
     ft="runs/sweep/$run/weights/last.pt"
     [[ -f "$ft" ]] || { echo "[wise] $ft missing, skipping $run"; continue; }
     out="eval_results/sweep_wise_$run/sweep_results.json"
@@ -22,5 +29,4 @@ for run in paper_e5 paper_e5_s1 paper_e5_s2; do
     results+=("$out")
 done
 
-python3 scripts/select_wise_alpha.py "${results[@]}" \
-    --output eval_results/wise_seeds_summary.json
+python3 scripts/select_wise_alpha.py "${results[@]}" --output "$summary"

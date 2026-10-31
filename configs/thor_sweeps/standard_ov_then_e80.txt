@@ -1,17 +1,44 @@
-# Follow-up queue, started automatically when paper_fixed_optim.txt finishes (paper_e80
-# was skipped there via runs/sweep/SKIP_paper_e80 so this runs first).
+# Follow-up queue, started automatically by runs/sweep/chain_queue2.sh when
+# paper_fixed_optim.txt finishes. That queue's stock freeze runs and paper_e80 are
+# skipped via runs/sweep/SKIP_<name>.
 #
+# Re-prioritized 2026-10-31 ~20:30 (user): the goal is to upgrade the model, not to
+# replicate the paper, so the pretrained contrastive-head biases (dropped by the
+# ultralytics weight transfer) are restored in every new run (--restore-head-bias).
+# Each new run is compared against a bias-fixed reference:
+#   freeze*_e5_bias vs bias_e5, freeze10_e40_bias vs bias_e40,
+#   lr1e-4_e40_bias vs lr1e-4_e10_bias.
+
 # 1. Zero-shot standard open-vocab benchmarks (LVIS minival AP/APr/APc/APf, COCO val2017,
-#    ODinW AerialMaritimeDrone) at imgsz 640 for the key models, in priority order.
-#    Results are cached per (dataset, model) in eval_results/standard_ov/results.json.
-! source ~/venvs/yoloworld-trt/bin/activate && python -W ignore scripts/evaluate_standard_ov.py --datasets lvis coco odinw_aerial_all odinw_aerial --models base=yolov8m-worldv2.pt ft5_paper=5_epoch.pt wise5_a0.7=runs/wise_ft/wise_5_epoch_a0.70.pt lr1e-4_e10=runs/sweep/lr1e-4_e10/weights/last.pt paper_e40=runs/sweep/paper_e40/weights/last.pt wise40_a0.9=runs/wise_ft/paper_e40/wise_last_a0.90.pt lr2e-4_e10=runs/sweep/lr2e-4_e10/weights/last.pt bias_e5=runs/sweep/bias_e5/weights/last.pt freeze10_e5=runs/sweep/freeze10_e5/weights/last.pt freeze22_e5=runs/sweep/freeze22_e5/weights/last.pt freeze10_e40=runs/sweep/freeze10_e40/weights/last.pt bias_e40=runs/sweep/bias_e40/weights/last.pt > runs/sweep/standard_ov.log 2>&1
+#    ODinW AerialMaritimeDrone) at imgsz 640 for the key existing models. Results are
+#    cached per (dataset, model) in eval_results/standard_ov/results.json.
+! source ~/venvs/yoloworld-trt/bin/activate && python -W ignore scripts/evaluate_standard_ov.py --datasets lvis coco odinw_aerial_all odinw_aerial --models base=yolov8m-worldv2.pt ft5_paper=5_epoch.pt wise5_a0.7=runs/wise_ft/wise_5_epoch_a0.70.pt lr1e-4_e10=runs/sweep/lr1e-4_e10/weights/last.pt paper_e40=runs/sweep/paper_e40/weights/last.pt wise40_a0.9=runs/wise_ft/paper_e40/wise_last_a0.90.pt lr2e-4_e10=runs/sweep/lr2e-4_e10/weights/last.pt bias_e5=runs/sweep/bias_e5/weights/last.pt bias_e40=runs/sweep/bias_e40/weights/last.pt > runs/sweep/standard_ov.log 2>&1
 
-# 2. Low LR, long run: does lr 1e-4 only *slow* the open-vocab loss, or avoid it?
-#    (lr1e-4_e10 held novel OV ~0.20 over epochs 4-10 but was still improving on
-#    VisDrone.) Same recipe as lr1e-4_e10, 40 epochs. Then its standard-benchmark scores
-#    (other models are cached in results.json and skipped).
---epochs 40 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr1e-4_e40
-! source ~/venvs/yoloworld-trt/bin/activate && python -W ignore scripts/evaluate_standard_ov.py --datasets lvis coco odinw_aerial_all odinw_aerial --models lr1e-4_e40=runs/sweep/lr1e-4_e40/weights/last.pt >> runs/sweep/standard_ov.log 2>&1
+# 2. Best plain-training recipe + bias fix (reference for lr1e-4_e40_bias).
+--epochs 10 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --name lr1e-4_e10_bias
 
-# 3. The 80-epoch run (moved after the standard benchmarks at the user's request).
+# 3. Seeds for the bias-fixed 5-epoch recipe (bias_e5 is seed 0), then WiSE-FT on all
+#    three with the VisDrone-only alpha rule -> mean +- std with the fix.
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --seed 1 --name bias_e5_s1
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --seed 2 --name bias_e5_s2
+! scripts/wise_seeds.sh eval_results/wise_seeds_bias_summary.json bias_e5 bias_e5_s1 bias_e5_s2 > runs/sweep/wise_seeds_bias.log 2>&1
+
+# 4. Selective freezing, bias-fixed (compare with bias_e5). ultralytics freeze=N freezes
+#    model.0 .. model.N-1: 10 = whole backbone (neck + head train), 22 = all but the
+#    WorldDetect head (model.22).
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --freeze 10 --name freeze10_e5_bias
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --freeze 22 --name freeze22_e5_bias
+
+# 5. Low LR, long run, bias-fixed: does lr 1e-4 only slow the open-vocab loss or avoid
+#    it, and can it reach ~0.34 VisDrone while keeping novel OV ~0.20?
+--epochs 40 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --name lr1e-4_e40_bias
+
+# 6. Backbone frozen, 40 epochs, bias-fixed (compare with bias_e40).
+--epochs 40 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --freeze 10 --name freeze10_e40_bias
+
+# 7. Standard benchmarks for the new models (existing ones are cached and skipped).
+! source ~/venvs/yoloworld-trt/bin/activate && python -W ignore scripts/evaluate_standard_ov.py --datasets lvis coco odinw_aerial_all odinw_aerial --models lr1e-4_e10_bias=runs/sweep/lr1e-4_e10_bias/weights/last.pt lr1e-4_e40_bias=runs/sweep/lr1e-4_e40_bias/weights/last.pt freeze10_e5_bias=runs/sweep/freeze10_e5_bias/weights/last.pt freeze22_e5_bias=runs/sweep/freeze22_e5_bias/weights/last.pt freeze10_e40_bias=runs/sweep/freeze10_e40_bias/weights/last.pt >> runs/sweep/standard_ov.log 2>&1
+
+# 8. Lowest priority: the 80-epoch stock replication run. Skip any time with
+#    runs/sweep/SKIP_paper_e80 (the chain script removes it once at queue start).
 --epochs 80 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e80
