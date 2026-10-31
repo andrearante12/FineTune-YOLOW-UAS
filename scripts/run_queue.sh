@@ -8,6 +8,8 @@
 #     that must not overlap with training).
 # A training run whose log is silent for STALL_SECONDS (default 20 min) is killed and
 # retried with --resume from its last.pt, up to 3 attempts in total.
+# The queue file is read once at launch; to drop a pending run later, create
+# runs/sweep/SKIP_<name> before the queue reaches it.
 # Finished runs (completion line in their log) and "!" steps that already succeeded
 # (marker in runs/sweep/.queue_done) are skipped, so the queue can be restarted.
 # Usage: scripts/run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt
@@ -42,6 +44,10 @@ grep -vE '^\s*(#|$)' "$QUEUE" | while read -r line; do
         echo "[queue] skipping line without --name: $line"; continue
     fi
     log="runs/sweep/$name.log"
+    if [[ -e "runs/sweep/SKIP_$name" ]]; then
+        echo "[queue] $(date '+%F %T') runs/sweep/SKIP_$name present, skipping $name"
+        continue
+    fi
     if grep -q "epochs completed" "$log" 2>/dev/null; then
         echo "[queue] $name already trained, skipping training"
     else

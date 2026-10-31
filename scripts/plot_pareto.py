@@ -8,11 +8,20 @@ base model is a star and the Pareto frontier over all points is shaded.
 """
 import argparse
 import json
+import re
 from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+
+
+def series_key(results_dir, label):
+    """Group points into lines: 'e5' -> the run (results dir), 'wise_5_epoch_a0.50' ->
+    'wise_5_epoch', anything else stands alone."""
+    stem = re.sub(r"_?(a\d+\.\d+|e\d+)$", "", label)
+    name = results_dir.removeprefix("sweep_")
+    return name if not stem else (stem if stem != label else label)
 
 
 def load_points(paths, ov_metric):
@@ -22,12 +31,12 @@ def load_points(paths, ov_metric):
         data = json.loads(Path(path).read_text())
         b = data["base"]
         base = base or (b["visdrone_mAP"], b["openvocab"]["metrics"][ov_metric])
-        for run_name, run in data["runs"].items():
-            pts = []
+        for run in data["runs"].values():
             for c in run["checkpoints"]:
                 label = c.get("label") or f"e{c['epoch']}"
-                pts.append((c["visdrone_mAP"], c["openvocab"]["metrics"][ov_metric], label))
-            series[f"{Path(path).parent.name}/{run_name}"] = pts
+                key = series_key(Path(path).parent.name, label)
+                series.setdefault(key, []).append(
+                    (c["visdrone_mAP"], c["openvocab"]["metrics"][ov_metric], label))
     return base, series
 
 
@@ -53,16 +62,20 @@ def main():
     all_pts = [base + ("base",)]
     for name, pts in series.items():
         xs, ys = [p[1] for p in pts], [p[0] for p in pts]
-        ax.plot(xs, ys, marker="o", markersize=4, linewidth=1.2, label=name)
+        if len(pts) == 1:
+            ax.scatter(xs, ys, marker="D", s=40, zorder=4, label=name)
+        else:
+            ax.plot(xs, ys, marker="o", markersize=4, linewidth=1.2, label=name)
         if args.annotate:
             for vd, ov, lab in pts:
-                ax.annotate(lab, (ov, vd), fontsize=7, xytext=(3, 3),
+                short = lab if len(pts) == 1 else re.sub(r".*_(a\d+\.\d+|e\d+)$", r"\1", lab)
+                ax.annotate(short, (ov, vd), fontsize=7, xytext=(3, 3),
                             textcoords="offset points")
         all_pts += pts
 
     front = pareto_front(all_pts)
-    ax.plot([p[1] for p in front], [p[0] for p in front], color="0.6", linestyle="--",
-            linewidth=1, zorder=0, label="Pareto frontier")
+    ax.plot([p[1] for p in front], [p[0] for p in front], color="0.8", linewidth=6,
+            solid_capstyle="round", zorder=0, label="Pareto frontier")
     ax.scatter([base[1]], [base[0]], marker="*", s=180, color="black", zorder=5,
                label="base (yolov8m-worldv2)")
 

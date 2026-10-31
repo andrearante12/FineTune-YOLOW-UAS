@@ -13,7 +13,6 @@
 ! source ~/venvs/yoloworld-trt/bin/activate && python scripts/benchmark_thor.py --accuracy --calib-data configs/thor_sweeps/visdrone_calib.yaml --calib-fraction 0.08 > runs/sweep/benchmark.log 2>&1
 
 --epochs 40 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e40
---epochs 80 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e80
 
 # ---- Ablations, in priority order ----
 # Pretrained contrastive-head biases restored at fine-tune start (Finding 4).
@@ -22,6 +21,9 @@
 # Seed variance of paper_e5 (seed 0 above).
 --epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --seed 1 --name paper_e5_s1
 --epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --seed 2 --name paper_e5_s2
+
+# WiSE-FT on all three 5-epoch seeds; alpha picked by VisDrone mAP only (~40 min).
+! scripts/wise_seeds.sh > runs/sweep/wise_seeds.log 2>&1
 
 # LR grid, 10 epochs each, otherwise as paper_e5.
 --epochs 10 --optimizer AdamW --lr0 2.5e-5 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr2.5e-5_e10
@@ -32,3 +34,15 @@
 
 # If time remains.
 --epochs 40 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --name bias_e40
+
+# Selective layer freezing (otherwise as paper_e5 / paper_e40). ultralytics
+# freeze=N freezes model.0 .. model.N-1: 10 = whole backbone (neck + head train),
+# 22 = everything but the detection head (model.22).
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --freeze 10 --name freeze10_e5
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --freeze 22 --name freeze22_e5
+--epochs 40 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --freeze 10 --name freeze10_e40
+
+# Last on purpose: decide from paper_e40's epoch 1-40 curve whether 80 epochs are
+# still needed (user decision, Mon review). Cancel/skip by removing this line before
+# the queue reaches it, or by touching runs/sweep/SKIP_paper_e80.
+--epochs 80 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e80
