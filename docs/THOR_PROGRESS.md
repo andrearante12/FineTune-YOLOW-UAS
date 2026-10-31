@@ -377,6 +377,28 @@ _(re-runs and benchmark rows added as they finish)_
   0.125 to 0.209 (+67%; base 0.222 → ~94% of base), on every seed, with α selected on
   VisDrone only. Same α (0.7) as on the original 5_epoch.pt.
 - **12:41** LR grid started (`lr2.5e-5_e10` first).
+- **14:08 lr2.5e-5_e10 finished** (1.42 h), evaluated 14:25 (`eval_results/sweep_lr2.5e-5_e10/`):
+
+  | epoch | VisDrone mAP | mAP@50 | OV mAP | OV novel | novel@50 |
+  |---|---|---|---|---|---|
+  | 1 | 0.168 | 0.267 | 0.154 | 0.155 | 0.308 |
+  | 2 | 0.212 | 0.339 | 0.154 | 0.154 | 0.319 |
+  | 3 | 0.232 | 0.370 | 0.166 | 0.164 | 0.337 |
+  | 4 | 0.245 | 0.387 | 0.176 | 0.165 | 0.348 |
+  | 5 | 0.255 | 0.406 | 0.195 | 0.181 | 0.377 |
+  | 6 | 0.260 | 0.413 | 0.211 | 0.174 | 0.370 |
+  | 7 | 0.264 | 0.420 | 0.216 | 0.180 | 0.368 |
+  | 8 | 0.268 | 0.426 | 0.217 | 0.181 | 0.380 |
+  | 9 | 0.268 | 0.427 | 0.293 | 0.182 | 0.375 |
+  | 10 | 0.271 | 0.431 | 0.293 | 0.181 | 0.374 |
+
+  - 28× lower LR than the paper recipe: novel OV drops once (0.222 → 0.155 at epoch 1),
+    then stays flat ~0.18 for 10 epochs while VisDrone climbs slowly to 0.271.
+  - **Dominated by WiSE-FT:** base↔5_epoch α=0.5 gives 0.275 / novel 0.225 — better on
+    both axes. Lowering the LR is a worse way to buy open-vocab retention than weight
+    averaging. Novel mAP@50 stays high (0.374 vs base 0.394): the low LR mostly keeps
+    loose-IoU detections.
+- **14:25** `lr1e-4_e10` started.
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
