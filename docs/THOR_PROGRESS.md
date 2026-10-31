@@ -18,6 +18,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
 | bias_e5 (paper_e5 + pretrained cv4 biases kept) | 0.303 | 0.484 | 0.165 | 0.162 | +0.004 VisDrone, +0.020 novel vs paper_e5; seed noise TBD |
+| **lr1e-4_e10** (AdamW lr 1e-4, 10 ep, no averaging) | 0.304 | 0.484 | 0.309 | 0.202 | **matches WiSE-FT α0.7 frontier with plain training** |
 | **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | paper: 40 ep 0.298, 80 ep 0.330; novel OV collapsed |
 | WiSE-FT base↔paper_e40 α=0.8 | 0.344 | 0.537 | 0.160 | 0.085 | beats paper_e40 on both axes (CPU eval) |
 | **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
@@ -399,6 +400,31 @@ _(re-runs and benchmark rows added as they finish)_
     averaging. Novel mAP@50 stays high (0.374 vs base 0.394): the low LR mostly keeps
     loose-IoU detections.
 - **14:25** `lr1e-4_e10` started.
+- **15:52 lr1e-4_e10 finished** (1.42 h), evaluated 16:08 (`eval_results/sweep_lr1e-4_e10/`):
+
+  | epoch | VisDrone mAP | mAP@50 | OV mAP | OV novel | novel@50 |
+  |---|---|---|---|---|---|
+  | 1 | 0.215 | 0.343 | 0.165 | 0.164 | 0.333 |
+  | 2 | 0.236 | 0.381 | 0.201 | 0.187 | 0.381 |
+  | 3 | 0.267 | 0.426 | 0.295 | 0.183 | 0.372 |
+  | 4 | 0.272 | 0.435 | 0.199 | 0.200 | 0.387 |
+  | 5 | 0.286 | 0.459 | 0.221 | 0.207 | 0.385 |
+  | 6 | 0.286 | 0.461 | 0.244 | 0.192 | 0.365 |
+  | 7 | 0.294 | 0.470 | 0.256 | 0.203 | 0.382 |
+  | 8 | 0.297 | 0.473 | 0.316 | 0.209 | 0.379 |
+  | 9 | 0.303 | 0.480 | 0.310 | 0.203 | 0.378 |
+  | 10 | **0.304** | **0.484** | 0.309 | **0.202** | 0.371 |
+
+  - **Plain training reaches the WiSE-FT frontier:** 0.304 / novel 0.202 vs WiSE α0.7
+    0.308 / 0.209 (single) and 0.299 ± 0.002 / 0.209 ± 0.031 (3 seeds). Novel OV is
+    stable 0.19–0.21 across epochs 4–10 instead of dropping to ~0.13.
+  - So the paper recipe's *effective* LR (7.14e-4, from optimizer=auto) is what costs
+    the open-vocab ability: at 1e-4, 10 epochs keep ~91% of base novel OV with the same
+    VisDrone mAP as 5 epochs at 7.14e-4. Single seed — the effect size (0.202 vs 0.125 ±
+    0.021) is large enough that it's very unlikely to be seed noise, but a second seed
+    would make it airtight.
+  - Next idea (post-queue): WiSE-FT base ↔ lr1e-4_e10 to see if averaging stacks on top.
+- **16:08** `lr2e-4_e10` started.
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
