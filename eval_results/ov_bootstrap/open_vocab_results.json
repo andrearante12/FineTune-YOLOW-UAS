@@ -1,0 +1,104 @@
+{
+  "Base (yolov8m-worldv2)": {
+    "metrics": {
+      "mAP": 0.2632692952384815,
+      "mAP_50": 0.4400194032016832,
+      "mAP_75": 0.2590056737716222,
+      "mAP_small": 0.03499856632869397,
+      "mAP_medium": 0.08291807146962807,
+      "mAP_large": 0.33877424979027654,
+      "mAP_novel": 0.22177838602013497,
+      "mAP_50_novel": 0.3942734836881702,
+      "mAP_ci95": [
+        0.22077348411391276,
+        0.3410167306698551
+      ],
+      "mAP_50_ci95": [
+        0.4116449763407164,
+        0.5292559763854243
+      ],
+      "mAP_novel_ci95": [
+        0.20606040653548352,
+        0.2483400879782686
+      ],
+      "mAP_50_novel_ci95": [
+        0.37225828805363886,
+        0.4419549838124792
+      ]
+    },
+    "per_class": {
+      "backpack": 0.07607416553996534,
+      "car": 0.5,
+      "dog": 0.3595743932230296,
+      "foreign object on driveway": 0.004584233788942524,
+      "foreign object on orange circle landing pad": 0.47699766156895995,
+      "orange circle landing pad": 0.3976959235975221,
+      "pedestrian": 0.2754840457870424,
+      "soccer ball": 0.015743938402390335
+    },
+    "fps": 13.6864706585767,
+    "num_predictions": 10746,
+    "weights": "yolov8m-worldv2.pt",
+    "classes": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ]
+  },
+  "Fine-tuned (5_epoch)": {
+    "metrics": {
+      "mAP": 0.1962707232699763,
+      "mAP_50": 0.29383943455633516,
+      "mAP_75": 0.20959138981227649,
+      "mAP_small": 0.05277119393752619,
+      "mAP_medium": 0.05244206060465594,
+      "mAP_large": 0.24435395383375064,
+      "mAP_novel": 0.12878977340779785,
+      "mAP_50_novel": 0.18524663933991076,
+      "mAP_ci95": [
+        0.1490999450491914,
+        0.2649178689354204
+      ],
+      "mAP_50_ci95": [
+        0.24816855937529908,
+        0.37221716275614125
+      ],
+      "mAP_novel_ci95": [
+        0.11177208084009295,
+        0.1508820233515063
+      ],
+      "mAP_50_novel_ci95": [
+        0.16213496506180108,
+        0.21516167493110233
+      ]
+    },
+    "per_class": {
+      "backpack": 0.014221276570289949,
+      "car": 0.45,
+      "dog": 0.010931741089951954,
+      "foreign object on driveway": 0.0005966832388515861,
+      "foreign object on orange circle landing pad": 0.31048585800753836,
+      "orange circle landing pad": 0.42390761481776373,
+      "pedestrian": 0.3474271457130235,
+      "soccer ball": 0.012595466722391473
+    },
+    "fps": 22.608627531068198,
+    "num_predictions": 47523,
+    "weights": "5_epoch.pt",
+    "classes": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ]
+  }
+}
