@@ -14,12 +14,13 @@ import contextlib
 import csv
 import io
 import json
-import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+# No expandable_segments here (unlike finetune.py on the 5090s): on Thor's unified
+# memory its many small mappings hit NV_ERR_NO_MEMORY in the driver and stalled
+# training mid-epoch.
 sys.path.insert(0, str(Path(__file__).parent))
 
 from pycocotools.coco import COCO
@@ -56,6 +57,8 @@ def make_ov_callback(args, log_path, ov_gt, classes, eval_args, base_map):
     state = {"best": base_map, "since_best": 0}
 
     def on_fit_epoch_end(trainer):
+        if trainer.epoch + 1 > trainer.epochs:
+            return  # ultralytics re-fires this after final validation; already logged
         ov_map, ov_map50, ov_novel = score_openvocab(
             trainer.last, ov_gt, classes, args.ov_images, eval_args)
         ratio = ov_map / base_map if base_map > 0 else 0.0
@@ -73,7 +76,17 @@ def make_ov_callback(args, log_path, ov_gt, classes, eval_args, base_map):
         if status != "training":
             trainer.stop = True
 
-        losses = trainer.tloss.tolist() if trainer.tloss is not None else [None] * 3
+        # ultralytics 8.4.x: tloss is {loss name: running mean}; older: a tensor
+        tloss = trainer.tloss
+        if isinstance(tloss, dict):
+            losses = [float(tloss[k]) if k in tloss else None
+                      for k in ("box_loss", "cls_loss", "dfl_loss")]
+            if None in losses:
+                losses = [float(v) for v in tloss.values()][:3]
+        elif tloss is not None:
+            losses = tloss.tolist()
+        else:
+            losses = [None] * 3
         row = {
             "epoch": trainer.epoch + 1,
             "lr": trainer.optimizer.param_groups[0]["lr"],
@@ -141,9 +154,12 @@ def parse_args():
                    help="Reload pretrained contrastive-head biases that ultralytics' "
                         "weight transfer drops (ablation; off = stock behaviour)")
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--workers", type=int, default=4,
+                   help="Each worker holds a ~3.5 GB mosaic buffer at imgsz 1280")
     p.add_argument("--project", default="runs/sweep")
     p.add_argument("--name", required=True)
+    p.add_argument("--resume", action="store_true",
+                   help="Continue from <project>/<name>/weights/last.pt if present")
     p.add_argument("--ov-images", default="datasets/OpenVocab/images")
     p.add_argument("--ov-ann", default="datasets/OpenVocab/annotations/val.json")
     p.add_argument("--ov-min-ratio", type=float, default=0.0,
@@ -164,6 +180,20 @@ def main():
     ov_classes = get_classes_from_coco(ov_gt)
     eval_args = SimpleNamespace(imgsz=args.imgsz, conf=0.001, iou_thresh=0.7,
                                 max_det=300, device="0")
+
+    last = run_dir / "weights" / "last.pt"
+    if args.resume and last.exists() and log_path.exists():
+        # Continue an interrupted run: base reference comes from the existing log, and
+        # the bias restore must not run again (it would overwrite trained biases).
+        with open(log_path) as f:
+            rows = list(csv.DictReader(f))
+        base_map = float(rows[0]["openvocab_mAP"])
+        print(f"[resume] {last} after epoch {rows[-1]['epoch']}; base OV mAP {base_map:.4f}")
+        model = YOLOWorld(str(last))
+        model.add_callback("on_fit_epoch_end",
+                           make_ov_callback(args, log_path, ov_gt, ov_classes, eval_args, base_map))
+        model.train(resume=True)
+        return
 
     base_map, base_map50, base_novel = score_openvocab(
         args.weights, ov_gt, ov_classes, args.ov_images, eval_args)
