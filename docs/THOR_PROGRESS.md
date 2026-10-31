@@ -16,6 +16,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | **WiSE-FT α=0.7** | **0.308** | **0.485** | **0.329** | **0.209** | α picked by VisDrone-only rule (≤0.01 below α=1) |
 | WiSE-FT α=0.8 | 0.315 | 0.497 | 0.291 | 0.175 | beats 5_epoch on both axes |
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
+| **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
 
 Pareto plots: `eval_results/pareto_novel.png`, `eval_results/pareto_ov_all.png`.
 _(re-runs and benchmark rows added as they finish)_
@@ -159,6 +160,27 @@ _(re-runs and benchmark rows added as they finish)_
   mAP50 0.416. Unlike the 640 smoke test (−56% after 1 epoch, 1 warmup epoch at lr 2e-4,
   warmup_bias_lr 0.1); here epoch 1 sits inside a 3-epoch warmup with bias warmup from 0.
   Expect the OV drop as LR peaks in epochs 2–3.
+- **22:52 paper_e5 finished** (0.93 h for 5 epochs, 1 attempt, no driver errors).
+  Evaluated 23:01 (`eval_results/sweep_paper_e5/`, pycocotools, imgsz 1280):
+
+  | epoch | VisDrone mAP | mAP@50 | OV mAP | OV mAP@50 | OV novel | novel@50 |
+  |---|---|---|---|---|---|---|
+  | 1 | 0.220 | 0.361 | 0.346 | 0.531 | 0.229 | 0.407 |
+  | 2 | 0.219 | 0.362 | 0.175 | 0.297 | 0.132 | 0.215 |
+  | 3 | 0.257 | 0.415 | 0.158 | 0.285 | 0.145 | 0.251 |
+  | 4 | 0.278 | 0.449 | 0.145 | 0.252 | 0.132 | 0.199 |
+  | 5 | 0.299 | 0.479 | 0.161 | 0.283 | 0.142 | 0.232 |
+
+  - Epoch 5 reproduces the original `5_epoch.pt` (0.308 / 0.129 novel) within ~0.01
+    on both axes, despite 1 GPU vs 2 and ultralytics 8.4.194 vs 8.4.18. So the original
+    5-epoch run's *effective* recipe is confirmed as AdamW lr 7.14e-4.
+  - The novel-class loss happens in **one step, epoch 1 → 2** (0.229 → 0.132), when the
+    LR ramps up through warmup; epochs 2–5 are flat (0.13–0.15) while VisDrone keeps
+    climbing (0.219 → 0.299). So training *length* within 2–5 epochs barely matters for
+    OV; what matters is reaching the peak LR.
+  - Epoch 1 (VisDrone 0.220, OV 0.346, novel 0.229) is itself a useful operating point:
+    above base on OV, +68% VisDrone. Comparable to WiSE α≈0.3.
+- **23:01** Full benchmark started (between trainings).
 - **Queue order (as edited during your side session):** paper_e5 → benchmark →
   paper_e40 → bias_e5 → seeds s1, s2 → WiSE-FT on 3 seeds → LR grid → bias_e40 →
   freeze10_e5, freeze22_e5, freeze10_e40 → **paper_e80 last** (40-epoch curve informs
