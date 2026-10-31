@@ -135,6 +135,9 @@ venus_run.sh
 # Dataset images (too large for git)
 datasets/OpenVocab/images/
 datasets/VisDrone/
+datasets/coco/
+datasets/lvis/
+datasets/odinw/
 train/
 
 # Model weights (keep 5_epoch.pt)

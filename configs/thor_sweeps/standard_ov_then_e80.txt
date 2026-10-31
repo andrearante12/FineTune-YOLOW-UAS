@@ -1,0 +1,10 @@
+# Follow-up queue, started automatically when paper_fixed_optim.txt finishes (paper_e80
+# was skipped there via runs/sweep/SKIP_paper_e80 so this runs first).
+#
+# 1. Zero-shot standard open-vocab benchmarks (LVIS minival AP/APr/APc/APf, COCO val2017,
+#    ODinW AerialMaritimeDrone) at imgsz 640 for the key models, in priority order.
+#    Results are cached per (dataset, model) in eval_results/standard_ov/results.json.
+! source ~/venvs/yoloworld-trt/bin/activate && python -W ignore scripts/evaluate_standard_ov.py --datasets lvis coco odinw_aerial_all odinw_aerial --models base=yolov8m-worldv2.pt ft5_paper=5_epoch.pt wise5_a0.7=runs/wise_ft/wise_5_epoch_a0.70.pt lr1e-4_e10=runs/sweep/lr1e-4_e10/weights/last.pt paper_e40=runs/sweep/paper_e40/weights/last.pt wise40_a0.9=runs/wise_ft/paper_e40/wise_last_a0.90.pt lr2e-4_e10=runs/sweep/lr2e-4_e10/weights/last.pt bias_e5=runs/sweep/bias_e5/weights/last.pt freeze10_e5=runs/sweep/freeze10_e5/weights/last.pt freeze22_e5=runs/sweep/freeze22_e5/weights/last.pt freeze10_e40=runs/sweep/freeze10_e40/weights/last.pt bias_e40=runs/sweep/bias_e40/weights/last.pt > runs/sweep/standard_ov.log 2>&1
+
+# 2. The 80-epoch run (moved after the standard benchmarks at the user's request).
+--epochs 80 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e80
