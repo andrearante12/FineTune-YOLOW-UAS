@@ -21,7 +21,8 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | paper: 40 ep 0.298, 80 ep 0.330; novel OV collapsed |
 | WiSE-FT base↔paper_e40 α=0.8 | 0.344 | 0.537 | 0.160 | 0.085 | beats paper_e40 on both axes (CPU eval) |
 | **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
-| paper_e5, 3 seeds (mean ± std) | 0.302 ± 0.004 | 0.483 ± 0.003 | — | 0.125 ± 0.021 | novel OV varies a lot across seeds |
+| paper_e5, 3 seeds (mean ± std) | 0.302 ± 0.004 | 0.483 ± 0.003 | 0.181 ± 0.063 | 0.125 ± 0.021 | novel OV varies a lot across seeds |
+| **WiSE-FT α=0.7 on paper_e5, 3 seeds** | **0.299 ± 0.002** | — | 0.303 ± 0.056 | **0.209 ± 0.031** | α chosen on VisDrone only (=0.7 in all 3 seeds); OVB held out → **headline result** |
 
 **Thor deployment (paper Table 4 setting: imgsz 1280, batch 1, 120 W mode, frames in memory):**
 PyTorch FP32 **35 FPS**, PyTorch FP16 48–49 FPS, **TensorRT FP16 57 FPS with no accuracy
@@ -361,6 +362,21 @@ _(re-runs and benchmark rows added as they finish)_
     0.315 / novel 0.175 vs this sweep's α0.6: 0.317 / 0.109); base↔40-epoch WiSE owns
     the high-VisDrone end (0.33–0.346). Weight averaging helps at both ends.
 - **11:50** `wise_seeds.sh` (WiSE-FT on the 3 paper_e5 seeds, VisDrone-only α rule) started.
+- **12:41 WiSE-FT on 3 seeds done** (`eval_results/wise_seeds_summary.json`,
+  `eval_results/sweep_wise_paper_e5{,_s1,_s2}/`). α\* = smallest α with VisDrone within
+  0.01 of the seed's own fine-tuned model, chosen **without reading OVB**:
+
+  | seed | α\* | VisDrone (WiSE / ft) | OV novel (WiSE / ft) |
+  |---|---|---|---|
+  | 0 | 0.7 | 0.296 / 0.299 | 0.243 / 0.142 |
+  | 1 | 0.7 | 0.299 / 0.307 | 0.203 / 0.130 |
+  | 2 | 0.7 | 0.301 / 0.302 | 0.182 / 0.102 |
+  | **mean ± std** | 0.7 | **0.299 ± 0.002 / 0.302 ± 0.004** | **0.209 ± 0.031 / 0.125 ± 0.021** |
+
+  **Headline:** WiSE-FT α=0.7 costs 0.003 VisDrone mAP and recovers novel-class OV from
+  0.125 to 0.209 (+67%; base 0.222 → ~94% of base), on every seed, with α selected on
+  VisDrone only. Same α (0.7) as on the original 5_epoch.pt.
+- **12:41** LR grid started (`lr2.5e-5_e10` first).
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables

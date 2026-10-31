@@ -1,0 +1,74 @@
+{
+  "tolerance": 0.01,
+  "rows": [
+    {
+      "source": "eval_results/sweep_wise_paper_e5/sweep_results.json",
+      "alpha": 0.7,
+      "selected_visdrone_mAP": 0.2960373583265822,
+      "selected_ov_mAP": 0.3549453916754879,
+      "selected_ov_mAP_novel": 0.24277928461303386,
+      "finetuned_visdrone_mAP": 0.29862269753483484,
+      "finetuned_ov_mAP": 0.16130763581443047,
+      "finetuned_ov_mAP_novel": 0.14189592720681823,
+      "base_ov_mAP_novel": 0.22177838602013497
+    },
+    {
+      "source": "eval_results/sweep_wise_paper_e5_s1/sweep_results.json",
+      "alpha": 0.7,
+      "selected_visdrone_mAP": 0.2989140687226559,
+      "selected_ov_mAP": 0.3102814393827225,
+      "selected_ov_mAP_novel": 0.20343037590590388,
+      "finetuned_visdrone_mAP": 0.3065194002800352,
+      "finetuned_ov_mAP": 0.2508219906859942,
+      "finetuned_ov_mAP_novel": 0.1300197713636796,
+      "base_ov_mAP_novel": 0.22177838602013497
+    },
+    {
+      "source": "eval_results/sweep_wise_paper_e5_s2/sweep_results.json",
+      "alpha": 0.7,
+      "selected_visdrone_mAP": 0.3010119507078907,
+      "selected_ov_mAP": 0.24329793492101,
+      "selected_ov_mAP_novel": 0.1817132990815197,
+      "finetuned_visdrone_mAP": 0.3020749077988452,
+      "finetuned_ov_mAP": 0.13027824583440112,
+      "finetuned_ov_mAP_novel": 0.10186832237175224,
+      "base_ov_mAP_novel": 0.22177838602013497
+    },
+    {
+      "summary": {
+        "alpha": {
+          "mean": 0.7,
+          "std": 0.0
+        },
+        "selected_visdrone_mAP": {
+          "mean": 0.29865445925237627,
+          "std": 0.002497436715481976
+        },
+        "selected_ov_mAP": {
+          "mean": 0.30284158865974015,
+          "std": 0.0561943251941061
+        },
+        "selected_ov_mAP_novel": {
+          "mean": 0.2093076532001525,
+          "std": 0.030954328268093488
+        },
+        "finetuned_visdrone_mAP": {
+          "mean": 0.30240566853790507,
+          "std": 0.003958728402074506
+        },
+        "finetuned_ov_mAP": {
+          "mean": 0.1808026241116086,
+          "std": 0.06259184876836461
+        },
+        "finetuned_ov_mAP_novel": {
+          "mean": 0.12459467364741669,
+          "std": 0.02055787078301886
+        },
+        "base_ov_mAP_novel": {
+          "mean": 0.22177838602013497,
+          "std": 0.0
+        }
+      }
+    }
+  ]
+}
