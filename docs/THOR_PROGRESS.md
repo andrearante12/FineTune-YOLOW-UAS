@@ -13,7 +13,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | Base yolov8m-worldv2 | 0.131 | 0.198 | 0.263 [0.221, 0.341] | 0.222 [0.206, 0.248] | paper reported OV 0.034; [95% bootstrap CI] |
 | 5_epoch.pt (paper) | 0.308 | 0.492 | 0.196 [0.149, 0.265] | 0.129 [0.112, 0.151] | paper reported OV 0.034 |
 | WiSE-FT α=0.6 (base↔5_epoch) | 0.295 | 0.462 | 0.338 | 0.222 | novel = base level |
-| **WiSE-FT α=0.7** | **0.308** | **0.485** | **0.329** | **0.209** | α picked by VisDrone-only rule (≤0.01 below α=1) |
+| **WiSE-FT α=0.7** | **0.308** | **0.485** | **0.329** | **0.209** | α picked by VisDrone-only rule (≤0.01 below α=1); novel **not significantly below base** (paired CI [−0.035, +0.011]) |
 | WiSE-FT α=0.8 | 0.315 | 0.497 | 0.291 | 0.175 | beats 5_epoch on both axes |
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
@@ -257,6 +257,20 @@ _(re-runs and benchmark rows added as they finish)_
 - **Added** `--paired-bootstrap N` to `evaluate_open_vocab.py`: CI on mAP(model) −
   mAP(base) with both scored on the same image resamples (cancels the duplicate-image
   bias of per-model percentile CIs), plus the fraction of resamples with diff ≥ 0.
+- **05:50 Paired bootstrap done** (`eval_results/ov_paired_bootstrap/`, 1000 resamples,
+  each model scored on the same resamples as base; CPU inference, so only novel-only is
+  reliable — its point estimates match the GPU evals within 0.003):
+
+  | model − base | novel mAP diff, 95% CI | novel mAP@50 diff, 95% CI | resamples with diff ≥ 0 |
+  |---|---|---|---|
+  | 5_epoch.pt (paper) | **[−0.124, −0.070]** | [−0.260, −0.179] | 0.0% |
+  | paper_e5 (re-run) | **[−0.104, −0.062]** | [−0.209, −0.138] | 0.0% |
+  | **WiSE-FT α=0.7** | **[−0.035, +0.011]** | [−0.097, −0.019] | 14.3% |
+
+  → Plain 5-epoch fine-tuning **significantly** reduces novel-class mAP; WiSE-FT α=0.7
+  is **not significantly different from base** on novel mAP@[.5:.95] (small but
+  significant cost at mAP@50) while matching the fine-tuned VisDrone mAP. This is the
+  clean manuscript claim. (All-class diffs are in the JSON but unreliable — car, 1 box.)
 - **paper_e40 so far:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
