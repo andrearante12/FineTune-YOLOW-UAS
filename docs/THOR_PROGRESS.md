@@ -108,27 +108,6 @@ _(re-runs and benchmark rows added as they finish)_
   projected queue end ~Mon 03:00. LoRA not queued (needs custom adapter code; journal).
 - **21:34** Started WiSE-FT sweep eval (11 alphas + `5_epoch_biasfix.pt`) and
   bootstrap CIs (1000 resamples) for base and 5_epoch.
-- **21:45 WiSE-FT results** (`eval_results/sweep_wise_ft/`): interpolating base ↔
-  5_epoch gives a Pareto frontier at α 0.5–0.8 that dominates plain 5_epoch (α=1).
-  α=0.7: VisDrone 0.308 (= 5_epoch), OV 0.329, **novel 0.209 (94% of base, vs 58% for
-  5_epoch)**. α=0.6: novel 0.222 (= base) at VisDrone 0.295. α=1.00 reproduces 5_epoch
-  exactly; α=0 is within 0.001–0.002 of base (fp16 re-save rounding).
-  Post-hoc bias restore (`5_epoch_biasfix`): VisDrone 0.308 → 0.279, OV novel only
-  0.129 → 0.137 — the fine-tuned weights adapted to the −10 biases, so restoring after
-  training doesn't help; `bias_e5` tests restoring *before* training.
-- **Decision (α selection, avoids tuning on the test set):** α\* = smallest α whose
-  VisDrone mAP is within **0.01** of α=1; OVB is only read after α is fixed
-  (`scripts/select_wise_alpha.py`). On 5_epoch this picks α=0.7. Queued
-  `scripts/wise_seeds.sh` after the 3 seeds to report mean ± std across seeds.
-- **22:10 Bootstrap CIs** (`eval_results/ov_bootstrap/`): novel-only CIs don't overlap
-  (base [0.206, 0.248] vs 5_epoch [0.112, 0.151]); all-class CIs overlap slightly.
-  Point estimates sit near the low end of each interval (resampling with duplicate
-  images skews AP upward). TODO: paired bootstrap on the base−fine-tuned difference.
-- **Queue changes (user decisions):** selective-freezing runs added; `paper_e80` moved
-  to the **end** — decide from `paper_e40`'s epoch 1–40 curve whether it's still needed
-  (`touch runs/sweep/SKIP_paper_e80` to skip). Order: paper_e5 → benchmark →
-  paper_e40 → bias_e5 → seeds s1, s2 → WiSE-FT on seeds → LR grid (5×10 ep) →
-  bias_e40 → freeze10_e5, freeze22_e5, freeze10_e40 → paper_e80.
 - **21:45 WiSE-FT results** (`eval_results/sweep_wise_ft/`), θ(α) = (1−α)·base + α·5_epoch:
 
   | α | VisDrone mAP | mAP@50 | OV mAP | OV mAP@50 | OV novel |
@@ -169,6 +148,13 @@ _(re-runs and benchmark rows added as they finish)_
   [0.162, 0.215]. Novel-only CIs of base vs 5_epoch **do not overlap** → the novel-class
   loss is significant. All-class OV CIs **do overlap** (car/pedestrian dilute it), so the
   manuscript should lead with the novel-only metric. (`eval_results/ov_bootstrap/`)
+  Caveat: both point estimates sit near the *low* end of their percentile intervals
+  (resampling duplicates images, which skews AP upward), so the intervals are biased.
+  TODO: paired bootstrap on the base − fine-tuned *difference* (same resample for both
+  models) is the cleaner significance test for the manuscript.
+- **Decision (α selection rule, 0.01 tolerance):** α\* = smallest α whose VisDrone mAP
+  is within 0.01 (absolute) of α=1. The tolerance is a judgment call made before seeing
+  the seed runs; it picks α=0.7 on 5_epoch.
 - **22:08 paper_e5 epoch 1:** OV mAP 0.346 / novel 0.229 — *above* base — at VisDrone
   mAP50 0.416. Unlike the 640 smoke test (−56% after 1 epoch, 1 warmup epoch at lr 2e-4,
   warmup_bias_lr 0.1); here epoch 1 sits inside a 3-epoch warmup with bias warmup from 0.
