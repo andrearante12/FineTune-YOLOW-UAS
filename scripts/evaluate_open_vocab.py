@@ -193,6 +193,43 @@ def bootstrap_ci(coco_gt, predictions, n=1000, seed=0, novel_only=False):
     return {f"mAP{suffix}_ci95": [lo[0], hi[0]], f"mAP_50{suffix}_ci95": [lo[1], hi[1]]}
 
 
+def paired_bootstrap_diff(coco_gt, preds_a, preds_b, n=1000, seed=0, novel_only=False):
+    """95% CI on mAP(b) - mAP(a), scoring both models on the *same* image resamples.
+
+    Percentile CIs of each model's own mAP are biased by the duplicated images in a
+    resample; the paired difference largely cancels that and is the right test for
+    "model b differs from model a". Also returns the fraction of resamples where the
+    difference is >= 0 (a one-sided bootstrap p-value for "b is worse than a").
+    """
+    rng = np.random.default_rng(seed)
+    cats = coco_gt.loadCats(coco_gt.getCatIds())
+    cat_ids = [c["id"] for c in cats
+               if not (novel_only and c["name"] in VISDRONE_CLASSES)]
+
+    def by_img(preds):
+        out = {}
+        for p in preds:
+            if p["category_id"] in cat_ids:
+                out.setdefault(p["image_id"], []).append(p)
+        return out
+
+    a_by_img, b_by_img = by_img(preds_a), by_img(preds_b)
+    all_ids = np.array(sorted(coco_gt.getImgIds()))
+    diffs = []
+    with contextlib.redirect_stdout(io.StringIO()):
+        for _ in range(n):
+            sample = rng.choice(all_ids, size=len(all_ids), replace=True)
+            a = _bootstrap_sample(coco_gt, a_by_img, sample, cat_ids)
+            b = _bootstrap_sample(coco_gt, b_by_img, sample, cat_ids)
+            diffs.append((b[0] - a[0], b[1] - a[1]))
+    diffs = np.array(diffs)
+    lo, hi = np.percentile(diffs, [2.5, 97.5], axis=0)
+    suffix = "_novel" if novel_only else ""
+    return {f"diff_mAP{suffix}_ci95": [lo[0], hi[0]],
+            f"diff_mAP_50{suffix}_ci95": [lo[1], hi[1]],
+            f"diff_mAP{suffix}_frac_ge0": float(np.mean(diffs[:, 0] >= 0))}
+
+
 def print_comparison(all_results):
     """Print a side-by-side comparison table."""
     model_names = list(all_results.keys())
@@ -294,6 +331,9 @@ def parse_args():
                         help="Device: '0' for GPU, 'cpu' for CPU")
     parser.add_argument("--bootstrap", type=int, default=0,
                         help="Image-level bootstrap resamples for 95%% CIs (0 = off; ~1000)")
+    parser.add_argument("--paired-bootstrap", type=int, default=0,
+                        help="Resamples for 95%% CIs on each model's mAP difference vs "
+                             "the base model, scored on the same resamples (0 = off)")
     parser.add_argument("--output", default="eval_results",
                         help="Directory to save results JSON")
     return parser.parse_args()
@@ -358,6 +398,7 @@ def main():
 
     # Evaluate each model
     all_results = OrderedDict()
+    all_predictions = OrderedDict()
 
     for label, weights_path in models_to_eval.items():
         print(f"\n{'=' * 60}")
@@ -386,6 +427,22 @@ def main():
             "weights": weights_path,
             "classes": classes,
         }
+        all_predictions[label] = predictions
+
+    if args.paired_bootstrap and len(all_predictions) > 1:
+        base_label, *others = all_predictions
+        for label in others:
+            print(f"\nPaired bootstrap ({args.paired_bootstrap} resamples): "
+                  f"{label} - {base_label}")
+            paired = {}
+            for novel_only in (False, True):
+                paired.update(paired_bootstrap_diff(
+                    coco_gt, all_predictions[base_label], all_predictions[label],
+                    n=args.paired_bootstrap, novel_only=novel_only))
+            all_results[label]["paired_vs_base"] = paired
+            print("  " + "  ".join(
+                f"{k}=[{v[0]:+.3f}, {v[1]:+.3f}]" if isinstance(v, list) else f"{k}={v:.3f}"
+                for k, v in paired.items()))
 
     # Print comparison
     print_comparison(all_results)
