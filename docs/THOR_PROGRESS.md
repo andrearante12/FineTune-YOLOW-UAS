@@ -17,6 +17,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | WiSE-FT α=0.8 | 0.315 | 0.497 | 0.291 | 0.175 | beats 5_epoch on both axes |
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
+| **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | best VisDrone so far (paper: 40 ep 0.298, 80 ep 0.330); novel OV collapsed |
 
 **Thor deployment (paper Table 4 setting: imgsz 1280, batch 1, 120 W mode, frames in memory):**
 PyTorch FP32 **35 FPS**, PyTorch FP16 48–49 FPS, **TensorRT FP16 57 FPS with no accuracy
@@ -271,7 +272,42 @@ _(re-runs and benchmark rows added as they finish)_
   is **not significantly different from base** on novel mAP@[.5:.95] (small but
   significant cost at mAP@50) while matching the fine-tuned VisDrone mAP. This is the
   clean manuscript claim. (All-class diffs are in the JSON but unreliable — car, 1 box.)
-- **paper_e40 so far:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
+- **08:41 paper_e40 finished** (6.24 h, 1 attempt; occasional single driver-OOM lines,
+  no stall). Evaluated 09:06 (`eval_results/sweep_paper_e40/`):
+
+  | epoch | VisDrone mAP | mAP@50 | OV mAP | OV novel | novel@50 |
+  |---|---|---|---|---|---|
+  | 1 | 0.231 | 0.376 | 0.233 | 0.122 | 0.246 |
+  | 2 | 0.236 | 0.385 | 0.164 | 0.143 | 0.221 |
+  | 3 | 0.256 | 0.409 | 0.101 | 0.091 | 0.146 |
+  | 4 | 0.249 | 0.404 | 0.103 | 0.081 | 0.113 |
+  | 5 | 0.265 | 0.434 | 0.054 | 0.040 | 0.082 |
+  | 6 | 0.249 | 0.414 | 0.097 | 0.082 | 0.126 |
+  | 7 | 0.295 | 0.472 | 0.055 | 0.030 | 0.055 |
+  | 8 | 0.292 | 0.470 | 0.084 | 0.079 | 0.118 |
+  | 9 | 0.304 | 0.489 | 0.042 | 0.021 | 0.037 |
+  | 10 | 0.303 | 0.487 | 0.058 | 0.039 | 0.063 |
+  | 15 | 0.312 | 0.500 | 0.101 | 0.041 | 0.060 |
+  | 20 | 0.332 | 0.532 | 0.087 | 0.004 | 0.006 |
+  | 25 | 0.321 | 0.509 | 0.032 | 0.002 | 0.004 |
+  | 30 | 0.333 | 0.527 | 0.078 | 0.015 | 0.024 |
+  | 35 | 0.341 | 0.538 | 0.043 | 0.015 | 0.024 |
+  | 40 | **0.341** | **0.538** | 0.037 | **0.007** | 0.012 |
+
+  - **VisDrone 0.341 at 40 epochs beats every number in the paper** (paper 40-ep 0.298,
+    80-ep best 0.330). The paper's long runs were on `optimizer=auto` → SGD lr 0.01; with
+    the 5-epoch run's AdamW 7.14e-4 held fixed, 40 epochs is clearly better on VisDrone.
+  - **Novel OV collapses to ~0 by epoch 20** and stays there (mosaic off from epoch 31
+    did not bring it back). Confirms the paper's qualitative "long training destroys
+    open-vocab", now with a controlled optimizer and the fixed metric.
+  - Same-epoch comparison with paper_e5 shows schedule + augmentation matter, not just
+    epochs: at epoch 5, paper_e5 novel 0.142 (LR decayed to ~1%, no mosaic) vs paper_e40
+    novel 0.040 (LR still ~88% of peak, mosaic on).
+  - Next: WiSE-FT base ↔ paper_e40 (α 0.3–0.9) — the strongest VisDrone endpoint may give
+    a better frontier than base ↔ 5-epoch. Running **CPU-only** (no GPU while training;
+    6 threads, nice 15, 24 GB cap) → `eval_results/sweep_wise_paper_e40/`.
+- **09:06** `bias_e5` started.
+- **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
   mosaic for the last 10 epochs, so a 5-epoch run never uses mosaic while a 40-epoch run
