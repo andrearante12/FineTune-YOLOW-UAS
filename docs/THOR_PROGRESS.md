@@ -195,8 +195,10 @@ _(re-runs and benchmark rows added as they finish)_
     above base on OV, +68% VisDrone. Comparable to WiSE α≈0.3.
 - **23:01** Full benchmark started (between trainings).
 - **2026-10-31 02:25 Benchmark finished**, 24/24 configs, no failures
-  (`eval_results/thor_benchmark/benchmark_120W.{csv,json}`). Native venv (JetPack
-  TensorRT 10.16, torch 2.14.1+cu130), power mode 120 W (not changed). Latency = 500
+  (`eval_results/thor_benchmark/benchmark_120W.{csv,json}`). Native venv (TensorRT
+  **10.16.1.11 from the `tensorrt-cu13` pip wheel** — auto-installed by ultralytics at
+  the first engine export on 10-30 20:43, shadowing JetPack's 10.16.2.10; noticed and
+  corrected here 10-31 18:40 — torch 2.14.1+cu130), power mode 120 W (not changed). Latency = 500
   batch-1 predictions on 50 VisDrone val frames decoded into memory, end-to-end
   (preprocess + inference + NMS), after 30 warm-up. Power = tegrastats VIN (whole board)
   mean during timing. Accuracy = same evaluators as the paper, re-run with that runtime
@@ -447,6 +449,32 @@ _(re-runs and benchmark rows added as they finish)_
     2e-4 → 0.319 / 0.172; paper recipe (7.14e-4, 5 ep) → 0.302 / 0.125. LR is a smooth
     VisDrone-vs-open-vocab dial; the paper's effective LR sits *inside* the frontier.
 - **17:51** `lr7.14e-4_e10` started.
+- **18:20–18:45 Standard open-vocab benchmarks added (your request), to run before
+  paper_e80.**
+  - Data (official sources, `datasets/`, gitignored): COCO val2017 images + 2017
+    annotations (cocodataset.org); LVIS v1 minival as used by YOLO-World/GLIP
+    (`lvis_v1_minival_inserted_image_name.json`, 4809 images, 1203 classes, from the
+    GLIPModel/GLIP Hugging Face repo); ODinW AerialMaritimeDrone (GLIP odinw_35 zip).
+  - `scripts/evaluate_standard_ov.py`: zero-shot, imgsz 640 (YOLO-World protocol),
+    conf 0.001, ≤300 dets/image. LVIS via the official `lvis` API (AP, APr/APc/APf —
+    APr is the standard "rare/novel" proxy); COCO + ODinW via pycocotools. Prompts =
+    category names with "_" → " ". Same sorted-category-id mapping as the fixed OVB
+    evaluator (COCO ids are non-contiguous). Shim: `np.float = float` for the
+    unmaintained lvis 0.5.3 under NumPy 2 (alias of the builtin, no behaviour change).
+  - **Decision:** this is standard *LVIS AP* from the official API, not the "fixed AP"
+    variant some YOLO-World tables use, so absolute numbers can differ slightly from the
+    paper; comparisons between our models are apples-to-apples.
+  - **Decision:** ODinW AerialMaritimeDrone's official test split is 7 images / 78
+    boxes. Since we never train on ODinW, I also report `odinw_aerial_all` = large
+    train+valid+test pooled (74 images, 1151 boxes; boat/car/dock/jetski/lift), with a
+    novel-only score that excludes car. Merge snippet: images re-id'd, `file_name` =
+    `<split>/<file>` → `datasets/odinw/AerialMaritimeDrone/large/all_zero_shot.json`.
+  - CPU smoke test (base, 20 images): LVIS AP 0.432, COCO AP 0.596, ODinW runs — OK.
+  - **Ordering:** `runs/sweep/SKIP_paper_e80` makes the main queue skip e80;
+    `runs/sweep/chain_queue2.sh` (detached) waits for the main queue to exit, removes the
+    SKIP file and runs `configs/thor_sweeps/standard_ov_then_e80.txt`: the benchmarks
+    on 12 models (GPU, nothing else running), then paper_e80. Estimated: benchmarks
+    ~Sun 11:30–15:00, paper_e80 done ~Mon 04:00–05:00.
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
