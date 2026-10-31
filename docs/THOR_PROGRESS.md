@@ -18,6 +18,11 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
 
+**Thor deployment (paper Table 4 setting: imgsz 1280, batch 1, 120 W mode, frames in memory):**
+PyTorch FP32 **35 FPS**, PyTorch FP16 48–49 FPS, **TensorRT FP16 57 FPS with no accuracy
+loss** (5_epoch VisDrone 0.308, novel 0.128), TensorRT INT8 59 FPS (−0.008 VisDrone,
+−0.01 to −0.025 novel). Paper: Xavier 9.4, Orin Nano 12.5 FPS. Full matrix below (02:25 entry).
+
 Pareto plots: `eval_results/pareto_novel.png`, `eval_results/pareto_ov_all.png`.
 _(re-runs and benchmark rows added as they finish)_
 
@@ -181,6 +186,65 @@ _(re-runs and benchmark rows added as they finish)_
   - Epoch 1 (VisDrone 0.220, OV 0.346, novel 0.229) is itself a useful operating point:
     above base on OV, +68% VisDrone. Comparable to WiSE α≈0.3.
 - **23:01** Full benchmark started (between trainings).
+- **2026-10-31 02:25 Benchmark finished**, 24/24 configs, no failures
+  (`eval_results/thor_benchmark/benchmark_120W.{csv,json}`). Native venv (JetPack
+  TensorRT 10.16, torch 2.14.1+cu130), power mode 120 W (not changed). Latency = 500
+  batch-1 predictions on 50 VisDrone val frames decoded into memory, end-to-end
+  (preprocess + inference + NMS), after 30 warm-up. Power = tegrastats VIN (whole board)
+  mean during timing. Accuracy = same evaluators as the paper, re-run with that runtime
+  (TensorRT engines are exported per vocabulary: VisDrone classes / OVB classes).
+
+  | Model | Runtime | imgsz | FPS | p50 ms | p99 ms | infer ms | board W | FPS/W | VisDrone mAP | mAP@50 | OV mAP | OV novel | engine build s |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | base | torch-fp32 | 640 | 106 | 9.5 | 10.1 | 7.7 | 62 | 1.70 | 0.083 | 0.125 | 0.254 | 0.215 | - |
+  | base | torch-fp16 | 640 | 124 | 8.0 | 8.9 | 6.3 | 50 | 2.48 | 0.082 | 0.125 | 0.252 | 0.212 | - |
+  | base | trt-fp16 | 640 | 161 | 6.2 | 7.3 | 2.7 | 53 | 3.05 | 0.082 | 0.125 | 0.234 | 0.216 | ~200 |
+  | base | trt-int8 | 640 | 169 | 6.0 | 6.9 | 2.4 | 42 | 4.00 | 0.080 | 0.120 | 0.298 | 0.210 | 490 |
+  | base | torch-fp32 | 960 | 69 | 14.8 | 16.8 | 11.9 | 63 | 1.09 | 0.116 | 0.174 | 0.268 | 0.229 | - |
+  | base | torch-fp16 | 960 | 91 | 11.1 | 11.8 | 8.8 | 61 | 1.49 | 0.116 | 0.174 | 0.268 | 0.229 | - |
+  | base | trt-fp16 | 960 | 116 | 9.2 | 10.5 | 4.8 | 66 | 1.74 | 0.116 | 0.174 | 0.268 | 0.230 | 133 |
+  | base | trt-int8 | 960 | 118 | 9.1 | 10.6 | 4.6 | 48 | 2.44 | 0.110 | 0.166 | 0.240 | 0.201 | 694 |
+  | base | torch-fp32 | 1280 | 35 | 29.3 | 34.3 | 21.1 | 66 | 0.53 | 0.131 | 0.197 | 0.263 | 0.221 | - |
+  | base | torch-fp16 | 1280 | 49 | 19.4 | 22.7 | 14.4 | 57 | 0.87 | 0.131 | 0.197 | 0.264 | 0.222 | - |
+  | base | trt-fp16 | 1280 | 57 | 16.3 | 21.5 | 8.9 | 58 | 0.97 | 0.130 | 0.197 | 0.264 | 0.223 | 152 |
+  | base | trt-int8 | 1280 | 59 | 15.5 | 20.8 | 8.3 | 48 | 1.22 | 0.123 | 0.185 | 0.241 | 0.198 | 1055 |
+  | 5_epoch | torch-fp32 | 640 | 104 | 9.6 | 10.0 | 7.7 | 56 | 1.85 | 0.197 | 0.327 | 0.278 | 0.167 | - |
+  | 5_epoch | torch-fp16 | 640 | 110 | 9.1 | 9.7 | 7.1 | 50 | 2.20 | 0.196 | 0.327 | 0.291 | 0.168 | - |
+  | 5_epoch | trt-fp16 | 640 | 158 | 6.3 | 7.9 | 2.6 | 55 | 2.88 | 0.197 | 0.327 | 0.277 | 0.166 | 132 |
+  | 5_epoch | trt-int8 | 640 | 165 | 6.1 | 7.1 | 2.5 | 41 | 4.01 | 0.192 | 0.318 | 0.268 | 0.159 | 481 |
+  | 5_epoch | torch-fp32 | 960 | 68 | 14.8 | 16.4 | 11.9 | 66 | 1.03 | 0.271 | 0.439 | 0.286 | 0.154 | - |
+  | 5_epoch | torch-fp16 | 960 | 90 | 11.2 | 11.9 | 8.9 | 57 | 1.57 | 0.270 | 0.438 | 0.285 | 0.153 | - |
+  | 5_epoch | trt-fp16 | 960 | 115 | 9.2 | 10.7 | 4.8 | 71 | 1.63 | 0.271 | 0.438 | 0.284 | 0.152 | 135 |
+  | 5_epoch | trt-int8 | 960 | 116 | 9.2 | 11.3 | 4.7 | 53 | 2.16 | 0.262 | 0.425 | 0.294 | 0.168 | 693 |
+  | 5_epoch | torch-fp32 | 1280 | 35 | 27.2 | 32.1 | 20.5 | 63 | 0.55 | 0.308 | 0.493 | 0.250* | 0.126 | - |
+  | 5_epoch | torch-fp16 | 1280 | 48 | 19.7 | 23.8 | 14.6 | 59 | 0.82 | 0.307 | 0.491 | 0.251* | 0.127 | - |
+  | 5_epoch | trt-fp16 | 1280 | 57 | 16.1 | 22.1 | 8.8 | 59 | 0.97 | 0.308 | 0.492 | 0.196 | 0.128 | 151 |
+  | 5_epoch | trt-int8 | 1280 | 59 | 15.2 | 20.8 | 8.1 | 49 | 1.21 | 0.300 | 0.482 | 0.188 | 0.119 | 1052 |
+
+  - **Table 4 replacement:** at the paper's 1280 setting Thor does 35 FPS (PyTorch FP32)
+    / **57 FPS (TensorRT FP16)** vs Xavier 9.4 / Orin Nano 12.5. The paper's numbers
+    probably include reading images from disk; measured that way (`evaluate.py`), Thor
+    PyTorch FP32 @1280 is ~21 FPS — still 1.7× the Orin Nano.
+  - **TensorRT FP16 is lossless** (VisDrone and novel OV within 0.002 of PyTorch) and
+    1.6× PyTorch FP32 at 1280. **Recommended deployment config.**
+  - **INT8 isn't worth it:** only +2–4% FPS over FP16 (pre/post-processing dominates),
+    costs ~0.007 VisDrone mAP and 0.01–0.025 novel OV at 960/1280; its gain is ~20% less
+    board power (best FPS/W). Engine builds take 8–18 min (calibration on 518 train imgs).
+  - At 1280, TensorRT inference is only 8.9 of ~16 ms per frame: CPU letterbox + NMS are
+    now the bottleneck.
+  - **Inference resolution trades VisDrone vs novel OV for the fine-tuned model:**
+    5_epoch novel OV 0.167 @640 / 0.154 @960 / 0.128 @1280 while VisDrone is 0.197 /
+    0.271 / 0.308. Base novel OV is ~flat (0.215 / 0.229 / 0.221). One model; re-check
+    on re-runs before claiming it.
+  - \* **All-class OV mAP is fragile: OVB "car" has exactly 1 ground-truth box.** Its AP
+    can only take a few values; one detection crossing IoU thresholds moves it 0.45 ↔
+    0.90, i.e. ±0.056 on 8-class OV mAP. That is the whole 0.196 vs 0.250 gap between
+    the container eval and the native PyTorch rows above (every other class within
+    0.004; novel-only 0.129 vs 0.126). Explains the wide/skewed all-class bootstrap CIs
+    too. → **Use novel-only OV mAP as the headline metric**; report all-class with this
+    caveat. OVB box counts: pedestrian 571, backpack 106, landing pad 104, foreign object
+    on pad 91, dog 57, soccer ball 37, foreign object on driveway 20, **car 1**.
+- **02:25** `paper_e40` started.
 - **Queue order (as edited during your side session):** paper_e5 → benchmark →
   paper_e40 → bias_e5 → seeds s1, s2 → WiSE-FT on 3 seeds → LR grid → bias_e40 →
   freeze10_e5, freeze22_e5, freeze10_e40 → **paper_e80 last** (40-epoch curve informs
