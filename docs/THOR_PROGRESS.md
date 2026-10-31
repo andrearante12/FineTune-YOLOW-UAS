@@ -10,10 +10,15 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 
 | Model | VisDrone mAP | VisDrone mAP@50 | OV mAP | OV mAP novel | Notes |
 |---|---|---|---|---|---|
-| Base yolov8m-worldv2 | 0.131 | 0.198 | 0.263 | 0.222 | paper reported OV 0.034 |
-| 5_epoch.pt (paper) | 0.308 | 0.492 | 0.196 | 0.129 | paper reported OV 0.034 |
+| Base yolov8m-worldv2 | 0.131 | 0.198 | 0.263 [0.221, 0.341] | 0.222 [0.206, 0.248] | paper reported OV 0.034; [95% bootstrap CI] |
+| 5_epoch.pt (paper) | 0.308 | 0.492 | 0.196 | 0.129 | paper reported OV 0.034; CIs pending |
+| WiSE-FT α=0.6 (base↔5_epoch) | 0.295 | 0.462 | 0.338 | 0.222 | novel = base level |
+| **WiSE-FT α=0.7** | **0.308** | **0.485** | **0.329** | **0.209** | α picked by VisDrone-only rule (≤0.01 below α=1) |
+| WiSE-FT α=0.8 | 0.315 | 0.497 | 0.291 | 0.175 | beats 5_epoch on both axes |
+| 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 
-_(updated as runs finish; CIs, WiSE-FT, re-runs and benchmark rows below)_
+Pareto plots: `eval_results/pareto_novel.png`, `eval_results/pareto_ov_all.png`.
+_(re-runs and benchmark rows added as they finish)_
 
 ## Findings so far (affect the paper)
 
@@ -96,5 +101,48 @@ _(updated as runs finish; CIs, WiSE-FT, re-runs and benchmark rows below)_
 - **Decision:** INT8 calibration uses ~8% of VisDrone **train** images
   (`configs/thor_sweeps/visdrone_calib.yaml`), not the val images that the accuracy check
   scores.
+- **21:45** Per your request, appended **selective-freezing runs** at the end of the
+  queue (after `bias_e40`): `freeze10_e5` (backbone frozen, neck + head train),
+  `freeze22_e5` (only the WorldDetect head trains), `freeze10_e40`. Verified
+  layers 0–9 = backbone (ends at SPPF), `model.22` = WorldDetect. ~8.7 h extra →
+  projected queue end ~Mon 03:00. LoRA not queued (needs custom adapter code; journal).
 - **21:34** Started WiSE-FT sweep eval (11 alphas + `5_epoch_biasfix.pt`) and
   bootstrap CIs (1000 resamples) for base and 5_epoch.
+- **21:45 WiSE-FT results** (`eval_results/sweep_wise_ft/`), θ(α) = (1−α)·base + α·5_epoch:
+
+  | α | VisDrone mAP | mAP@50 | OV mAP | OV mAP@50 | OV novel |
+  |---|---|---|---|---|---|
+  | 0.0 | 0.130 | 0.195 | 0.264 | 0.435 | 0.224 |
+  | 0.1 | 0.158 | 0.238 | 0.264 | 0.436 | 0.219 |
+  | 0.2 | 0.188 | 0.285 | 0.330 | 0.504 | 0.222 |
+  | 0.3 | 0.217 | 0.332 | 0.331 | 0.506 | 0.220 |
+  | 0.4 | 0.248 | 0.381 | 0.331 | 0.508 | 0.217 |
+  | 0.5 | 0.275 | 0.428 | 0.339 | 0.519 | 0.225 |
+  | 0.6 | 0.295 | 0.462 | 0.338 | 0.512 | 0.222 |
+  | 0.7 | 0.308 | 0.485 | 0.329 | 0.479 | 0.209 |
+  | 0.8 | 0.315 | 0.497 | 0.291 | 0.428 | 0.175 |
+  | 0.9 | 0.315 | 0.499 | 0.272 | 0.392 | 0.152 |
+  | 1.0 | 0.308 | 0.492 | 0.196 | 0.294 | 0.129 |
+
+  - α=1.0 reproduces 5_epoch exactly. α=0.0 is within 0.001–0.002 of base (fp16 re-save
+    of the interpolated weights), i.e. the endpoints check out.
+  - Frontier = α 0.5–0.8; α 0.7 and 0.8 dominate plain 5_epoch on both axes.
+  - Non-monotone OV(all) is driven by car/pedestrian (VisDrone classes inside OVB): they
+    improve with α while the novel classes stay flat until α≈0.6, then fall.
+  - **Caveat:** single fine-tuned checkpoint; α was swept on OVB. The VisDrone-only
+    selection rule (`scripts/select_wise_alpha.py`) picks α=0.7 without reading OVB;
+    `scripts/wise_seeds.sh` (queued after the seed runs) repeats this on 3 seeds for
+    mean ± std.
+- **21:45 Post-hoc bias restore** (`5_epoch_biasfix`): VisDrone 0.308 → 0.279, OV 0.196 →
+  0.204, novel 0.129 → 0.137. The fine-tuned weights co-adapted to the −10 biases, so
+  swapping the pretrained ones back afterwards mostly hurts. The *training-time* restore
+  (`bias_e5`) is the real test of Finding 4.
+- **21:50 Base bootstrap CIs** (1000 image resamples): OV mAP 0.263 [0.221, 0.341],
+  mAP@50 0.440 [0.412, 0.529], novel 0.222 [0.206, 0.248], novel mAP@50 0.394
+  [0.372, 0.442]. The 5_epoch novel 0.129 is far outside the base CI. (5_epoch CIs still
+  computing — 4.4× more detections make each resample slower; run left going in
+  parallel with training since it is CPU-only now.)
+- **Queue order (as edited during your side session):** paper_e5 → benchmark →
+  paper_e40 → bias_e5 → seeds s1, s2 → WiSE-FT on 3 seeds → LR grid → bias_e40 →
+  freeze10_e5, freeze22_e5, freeze10_e40 → **paper_e80 last** (40-epoch curve informs
+  whether 80 is still needed; drop it by creating `runs/sweep/SKIP_paper_e80`).
