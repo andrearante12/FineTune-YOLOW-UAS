@@ -473,7 +473,28 @@ _(re-runs and benchmark rows added as they finish)_
     the LR decays (0.13–0.14 by epochs 8–10). Novel OV tracks the *current* LR more than
     the epoch count — consistent with paper_e40 (near zero while LR stays high).
 - **19:36** `lr1.5e-3_e10` started.
-- **19:55 Added `lr1e-4_e40` (your request) before paper_e80** in
+- **20:35 Re-prioritized to the bias-fixed baseline (your call: upgrade, not
+  replicate).** Restoring the pretrained cv4 biases is correct by construction (it
+  undoes a loading bug), cost nothing on VisDrone in bias_e5, and at worst does nothing,
+  so every *new* run uses `--restore-head-bias`. Changes:
+  - Main queue: `lr1.5e-3_e10` (running) and `bias_e40` continue. The stock
+    `freeze10_e5`, `freeze22_e5`, `freeze10_e40` are skipped (`runs/sweep/SKIP_*`) →
+    the main queue ends ~Sun 04:00 and the follow-up queue starts ~7 h earlier.
+  - Follow-up queue (`configs/thor_sweeps/standard_ov_then_e80.txt`, rewritten):
+    standard benchmarks on 9 existing models → `lr1e-4_e10_bias` → `bias_e5_s1`,
+    `bias_e5_s2` → WiSE-FT on the 3 bias seeds (`wise_seeds.sh` now takes run names) →
+    `freeze10_e5_bias`, `freeze22_e5_bias` → `lr1e-4_e40_bias` → `freeze10_e40_bias` →
+    standard benchmarks for the new models → `paper_e80` (stock, lowest priority).
+  - The stock `lr1e-4_e40` added at 19:55 is replaced by `lr1e-4_e40_bias` (reference:
+    `lr1e-4_e10_bias`).
+  - Controlled comparisons: freeze*_e5_bias vs bias_e5; freeze10_e40_bias vs bias_e40;
+    bias seeds vs paper_e5 seeds; lr1e-4_*_bias vs lr1e-4_e10 (stock) for the bias
+    effect at low LR.
+  - Estimated: benchmarks Sun ~04:00–07:00, bias 10/5-epoch runs + WiSE ~07:00–13:00,
+    lr1e-4_e40_bias ~13:00–20:00, freeze10_e40_bias ~20:00–02:00 Mon, new-model
+    benchmarks ~02:00–03:00, paper_e80 ~03:00 → ~16:00 Mon.
+- **19:55 Added `lr1e-4_e40` (your request) before paper_e80** — superseded at 20:35 by
+  the bias-fixed `lr1e-4_e40_bias`. in
   `configs/thor_sweeps/standard_ov_then_e80.txt`: same recipe as lr1e-4_e10, 40 epochs,
   followed by its standard-benchmark scores. Question it answers: does a low LR only
   *slow* the open-vocab loss or avoid it, and can it reach paper_e40-level VisDrone
