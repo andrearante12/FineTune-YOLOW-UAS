@@ -17,6 +17,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | WiSE-FT α=0.8 | 0.315 | 0.497 | 0.291 | 0.175 | beats 5_epoch on both axes |
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
+| bias_e5 (paper_e5 + pretrained cv4 biases kept) | 0.303 | 0.484 | 0.165 | 0.162 | +0.004 VisDrone, +0.020 novel vs paper_e5; seed noise TBD |
 | **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | best VisDrone so far (paper: 40 ep 0.298, 80 ep 0.330); novel OV collapsed |
 
 **Thor deployment (paper Table 4 setting: imgsz 1280, batch 1, 120 W mode, frames in memory):**
@@ -307,6 +308,24 @@ _(re-runs and benchmark rows added as they finish)_
     a better frontier than base ↔ 5-epoch. Running **CPU-only** (no GPU while training;
     6 threads, nice 15, 24 GB cap) → `eval_results/sweep_wise_paper_e40/`.
 - **09:06** `bias_e5` started.
+- **09:52 bias_e5 finished** (0.74 h). Evaluated 10:01 (`eval_results/sweep_bias_e5/`):
+
+  | epoch | paper_e5 VisDrone / novel | bias_e5 VisDrone / novel |
+  |---|---|---|
+  | 1 | 0.220 / 0.229 | 0.222 / 0.180 |
+  | 2 | 0.219 / 0.132 | 0.225 / 0.170 |
+  | 3 | 0.257 / 0.145 | 0.257 / 0.136 |
+  | 4 | 0.278 / 0.132 | 0.285 / 0.145 |
+  | 5 | 0.299 / 0.142 | **0.303 / 0.162** |
+
+  - Final: +0.004 VisDrone, **+0.020 novel OV** (novel@50 0.242 vs 0.232). Same direction
+    on both axes, but small — needs the seed spread (s1, s2 next) before it can be called
+    an effect.
+  - Biases after training: paper_e5 −10.008 ×3; bias_e5 −11.961 / −10.445 / −8.977 (≈
+    restored values). **In both runs the cv4 bias moves < 0.01 in 5 epochs**, so it is
+    effectively fixed at its starting value — the ultralytics transfer bug fully
+    determines it in stock fine-tuning.
+- **10:01** `paper_e5_s1` started.
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
