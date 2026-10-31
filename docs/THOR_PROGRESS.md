@@ -245,6 +245,25 @@ _(re-runs and benchmark rows added as they finish)_
     caveat. OVB box counts: pedestrian 571, backpack 106, landing pad 104, foreign object
     on pad 91, dog 57, soccer ball 37, foreign object on driveway 20, **car 1**.
 - **02:25** `paper_e40` started.
+- **02:28–02:59 Driver OOM incident (handled, training unaffected).** I started a paired
+  bootstrap (base vs 5_epoch / WiSE α0.7 / paper_e5) in a second GPU container while
+  `paper_e40` trained. Two `NV_ERR_NO_MEMORY` kernel lines followed (02:3x, 02:5x);
+  training kept progressing, but the bootstrap process turned out to hold ~54 GB (CUDA
+  context + accumulated pycocotools objects). Killed it at 02:59 (MemAvailable 33 → 88 GB)
+  and restarted it **CPU-only** (`--device cpu`, `CUDA_VISIBLE_DEVICES=`), native venv,
+  `ulimit -v 24G`, nice 15. Rule from here: nothing else touches the GPU while training.
+  Note: CPU inference can flip OVB's single "car" box, so trust the paired *novel-only*
+  differences from that run.
+- **Added** `--paired-bootstrap N` to `evaluate_open_vocab.py`: CI on mAP(model) −
+  mAP(base) with both scored on the same image resamples (cancels the duplicate-image
+  bias of per-model percentile CIs), plus the fraction of resamples with diff ≥ 0.
+- **paper_e40 so far:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
+  0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
+  epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
+  mosaic for the last 10 epochs, so a 5-epoch run never uses mosaic while a 40-epoch run
+  uses it for epochs 1–30. The "5 vs 40 epochs" comparison therefore also differs in
+  augmentation (true of the paper's original runs too — ultralytics default). A
+  `close_mosaic` control would isolate it if the paper needs that.
 - **Queue order (as edited during your side session):** paper_e5 → benchmark →
   paper_e40 → bias_e5 → seeds s1, s2 → WiSE-FT on 3 seeds → LR grid → bias_e40 →
   freeze10_e5, freeze22_e5, freeze10_e40 → **paper_e80 last** (40-epoch curve informs
