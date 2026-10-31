@@ -473,6 +473,13 @@ _(re-runs and benchmark rows added as they finish)_
     the LR decays (0.13–0.14 by epochs 8–10). Novel OV tracks the *current* LR more than
     the epoch count — consistent with paper_e40 (near zero while LR stays high).
 - **19:36** `lr1.5e-3_e10` started.
+- **19:55 Added `lr1e-4_e40` (your request) before paper_e80** in
+  `configs/thor_sweeps/standard_ov_then_e80.txt`: same recipe as lr1e-4_e10, 40 epochs,
+  followed by its standard-benchmark scores. Question it answers: does a low LR only
+  *slow* the open-vocab loss or avoid it, and can it reach paper_e40-level VisDrone
+  (0.34) while keeping novel OV ~0.20? New timeline: standard benchmarks Sun
+  ~11:30–15:00 → lr1e-4_e40 Sun ~15:00–21:45 → paper_e80 Sun ~22:00 → **Mon ~11:00**
+  (no longer before Monday morning; e80 is last, so nothing else waits on it).
 - **18:20–18:45 Standard open-vocab benchmarks added (your request), to run before
   paper_e80.**
   - Data (official sources, `datasets/`, gitignored): COCO val2017 images + 2017

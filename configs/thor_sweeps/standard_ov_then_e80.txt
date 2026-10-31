@@ -6,5 +6,12 @@
 #    Results are cached per (dataset, model) in eval_results/standard_ov/results.json.
 ! source ~/venvs/yoloworld-trt/bin/activate && python -W ignore scripts/evaluate_standard_ov.py --datasets lvis coco odinw_aerial_all odinw_aerial --models base=yolov8m-worldv2.pt ft5_paper=5_epoch.pt wise5_a0.7=runs/wise_ft/wise_5_epoch_a0.70.pt lr1e-4_e10=runs/sweep/lr1e-4_e10/weights/last.pt paper_e40=runs/sweep/paper_e40/weights/last.pt wise40_a0.9=runs/wise_ft/paper_e40/wise_last_a0.90.pt lr2e-4_e10=runs/sweep/lr2e-4_e10/weights/last.pt bias_e5=runs/sweep/bias_e5/weights/last.pt freeze10_e5=runs/sweep/freeze10_e5/weights/last.pt freeze22_e5=runs/sweep/freeze22_e5/weights/last.pt freeze10_e40=runs/sweep/freeze10_e40/weights/last.pt bias_e40=runs/sweep/bias_e40/weights/last.pt > runs/sweep/standard_ov.log 2>&1
 
-# 2. The 80-epoch run (moved after the standard benchmarks at the user's request).
+# 2. Low LR, long run: does lr 1e-4 only *slow* the open-vocab loss, or avoid it?
+#    (lr1e-4_e10 held novel OV ~0.20 over epochs 4-10 but was still improving on
+#    VisDrone.) Same recipe as lr1e-4_e10, 40 epochs. Then its standard-benchmark scores
+#    (other models are cached in results.json and skipped).
+--epochs 40 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr1e-4_e40
+! source ~/venvs/yoloworld-trt/bin/activate && python -W ignore scripts/evaluate_standard_ov.py --datasets lvis coco odinw_aerial_all odinw_aerial --models lr1e-4_e40=runs/sweep/lr1e-4_e40/weights/last.pt >> runs/sweep/standard_ov.log 2>&1
+
+# 3. The 80-epoch run (moved after the standard benchmarks at the user's request).
 --epochs 80 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e80
