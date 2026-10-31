@@ -20,6 +20,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | bias_e5 (paper_e5 + pretrained cv4 biases kept) | 0.303 | 0.484 | 0.165 | 0.162 | +0.004 VisDrone, +0.020 novel vs paper_e5; seed noise TBD |
 | **lr1e-4_e10** (AdamW lr 1e-4, 10 ep, no averaging) | 0.304 | 0.484 | 0.309 | 0.202 | **matches WiSE-FT α0.7 frontier with plain training** |
 | lr2e-4_e10 (AdamW lr 2e-4, 10 ep) | 0.319 | 0.504 | 0.297 | 0.172 | on frontier (≈ WiSE α0.8) |
+| lr7.14e-4_e10 (paper LR, 10 ep) | 0.327 | 0.519 | 0.251 | 0.131 | 2× epochs vs paper_e5: +0.025 VisDrone, same novel OV |
 | **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | paper: 40 ep 0.298, 80 ep 0.330; novel OV collapsed |
 | WiSE-FT base↔paper_e40 α=0.8 | 0.344 | 0.537 | 0.160 | 0.085 | beats paper_e40 on both axes (CPU eval) |
 | **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
@@ -449,6 +450,29 @@ _(re-runs and benchmark rows added as they finish)_
     2e-4 → 0.319 / 0.172; paper recipe (7.14e-4, 5 ep) → 0.302 / 0.125. LR is a smooth
     VisDrone-vs-open-vocab dial; the paper's effective LR sits *inside* the frontier.
 - **17:51** `lr7.14e-4_e10` started.
+- **19:19 lr7.14e-4_e10 finished** (1.44 h), evaluated 19:36 (`eval_results/sweep_lr7.14e-4_e10/`):
+
+  | epoch | VisDrone mAP | mAP@50 | OV mAP | OV novel | novel@50 |
+  |---|---|---|---|---|---|
+  | 1 | 0.220 | 0.361 | 0.346 | 0.229 | 0.407 |
+  | 2 | 0.217 | 0.366 | 0.159 | 0.136 | 0.229 |
+  | 3 | 0.228 | 0.365 | 0.173 | 0.152 | 0.227 |
+  | 4 | 0.268 | 0.432 | 0.137 | 0.125 | 0.196 |
+  | 5 | 0.278 | 0.453 | 0.083 | **0.058** | 0.116 |
+  | 6 | 0.275 | 0.443 | 0.113 | 0.106 | 0.154 |
+  | 7 | 0.304 | 0.478 | 0.144 | 0.128 | 0.207 |
+  | 8 | 0.313 | 0.501 | 0.158 | 0.144 | 0.217 |
+  | 9 | 0.320 | 0.506 | 0.108 | 0.097 | 0.143 |
+  | 10 | **0.327** | **0.519** | 0.251 | **0.131** | 0.201 |
+
+  - Same LR/seed as paper_e5: epoch 1 is identical (0.220 / 0.229) — training is
+    deterministic on Thor.
+  - **Twice the epochs at the paper LR: +0.025 VisDrone (0.327 vs 0.302 ± 0.004) at the
+    same open-vocab cost** (novel 0.131 vs 0.125 ± 0.021).
+  - Novel OV dips to 0.058 at epoch 5 (LR still ~50% of peak) and partially recovers as
+    the LR decays (0.13–0.14 by epochs 8–10). Novel OV tracks the *current* LR more than
+    the epoch count — consistent with paper_e40 (near zero while LR stays high).
+- **19:36** `lr1.5e-3_e10` started.
 - **18:20–18:45 Standard open-vocab benchmarks added (your request), to run before
   paper_e80.**
   - Data (official sources, `datasets/`, gitignored): COCO val2017 images + 2017
