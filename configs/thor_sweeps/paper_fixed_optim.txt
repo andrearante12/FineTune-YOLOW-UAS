@@ -1,8 +1,34 @@
+# Dec 1 manuscript queue (scripts/run_queue.sh). Training lines are train_sweep.py
+# args; each finished run is evaluated by scripts/eval_run.sh. "!" lines run on the
+# host between trainings.
+#
 # Paper's 5 / 40 / 80-epoch comparison, re-run with ONE optimizer for all three.
 # The originals used optimizer=auto, which picked AdamW lr~7.1e-4 for 5 epochs but
 # switched to SGD-family lr=0.01 past 10k iterations (40/80 epochs). These pin the
 # settings auto actually chose for 5_epoch.pt (AdamW, lr 0.002*5/(4+10), beta1 0.9,
 # bias warmup from 0) plus finetune.py's batch/imgsz/wd/warmup.
 --epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e5
+
+# Full Thor benchmark between trainings (never concurrent with training).
+! source ~/venvs/yoloworld-trt/bin/activate && python scripts/benchmark_thor.py --accuracy --calib-data configs/thor_sweeps/visdrone_calib.yaml --calib-fraction 0.08 > runs/sweep/benchmark.log 2>&1
+
 --epochs 40 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e40
 --epochs 80 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e80
+
+# ---- Ablations, in priority order ----
+# Pretrained contrastive-head biases restored at fine-tune start (Finding 4).
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --name bias_e5
+
+# Seed variance of paper_e5 (seed 0 above).
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --seed 1 --name paper_e5_s1
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --seed 2 --name paper_e5_s2
+
+# LR grid, 10 epochs each, otherwise as paper_e5.
+--epochs 10 --optimizer AdamW --lr0 2.5e-5 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr2.5e-5_e10
+--epochs 10 --optimizer AdamW --lr0 1e-4   --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr1e-4_e10
+--epochs 10 --optimizer AdamW --lr0 2e-4   --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr2e-4_e10
+--epochs 10 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr7.14e-4_e10
+--epochs 10 --optimizer AdamW --lr0 1.5e-3 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name lr1.5e-3_e10
+
+# If time remains.
+--epochs 40 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --name bias_e40

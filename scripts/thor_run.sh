@@ -16,7 +16,7 @@ if ! docker info >/dev/null 2>&1; then
     exec sg docker -c "bash -c \"eval \\\"\\\$(echo $cmd | base64 -d)\\\"\""
 fi
 
-exec docker run --rm --runtime nvidia --ipc=host \
+exec docker run --rm --runtime nvidia --ipc=host ${THOR_NAME:+--name "$THOR_NAME"} \
     -u "$(id -u):$(id -g)" -e HOME=/cache -v "$CACHE:/cache" \
     -v "$REPO:/work" -w /work \
     "$IMAGE" "$@"
