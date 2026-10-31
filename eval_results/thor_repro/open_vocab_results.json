@@ -1,0 +1,72 @@
+{
+  "Base (yolov8m-worldv2)": {
+    "metrics": {
+      "mAP": 0.2632692952384815,
+      "mAP_50": 0.4400194032016832,
+      "mAP_75": 0.2590056737716222,
+      "mAP_small": 0.03499856632869397,
+      "mAP_medium": 0.08291807146962807,
+      "mAP_large": 0.33877424979027654,
+      "mAP_novel": 0.22177838602013497,
+      "mAP_50_novel": 0.3942734836881702
+    },
+    "per_class": {
+      "backpack": 0.07607416553996534,
+      "car": 0.5,
+      "dog": 0.3595743932230296,
+      "foreign object on driveway": 0.004584233788942524,
+      "foreign object on orange circle landing pad": 0.47699766156895995,
+      "orange circle landing pad": 0.3976959235975221,
+      "pedestrian": 0.2754840457870424,
+      "soccer ball": 0.015743938402390335
+    },
+    "fps": 17.37585243227413,
+    "num_predictions": 10746,
+    "weights": "yolov8m-worldv2.pt",
+    "classes": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ]
+  },
+  "Fine-tuned (5_epoch)": {
+    "metrics": {
+      "mAP": 0.1962707232699763,
+      "mAP_50": 0.29383943455633516,
+      "mAP_75": 0.20959138981227649,
+      "mAP_small": 0.05277119393752619,
+      "mAP_medium": 0.05244206060465594,
+      "mAP_large": 0.24435395383375064,
+      "mAP_novel": 0.12878977340779785,
+      "mAP_50_novel": 0.18524663933991076
+    },
+    "per_class": {
+      "backpack": 0.014221276570289949,
+      "car": 0.45,
+      "dog": 0.010931741089951954,
+      "foreign object on driveway": 0.0005966832388515861,
+      "foreign object on orange circle landing pad": 0.31048585800753836,
+      "orange circle landing pad": 0.42390761481776373,
+      "pedestrian": 0.3474271457130235,
+      "soccer ball": 0.012595466722391473
+    },
+    "fps": 18.43324970010925,
+    "num_predictions": 47523,
+    "weights": "5_epoch.pt",
+    "classes": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+# Paper's 5 / 40 / 80-epoch comparison, re-run with ONE optimizer for all three.
+# The originals used optimizer=auto, which picked AdamW lr~7.1e-4 for 5 epochs but
+# switched to SGD-family lr=0.01 past 10k iterations (40/80 epochs). These pin the
+# settings auto actually chose for 5_epoch.pt (AdamW, lr 0.002*5/(4+10), beta1 0.9,
+# bias warmup from 0) plus finetune.py's batch/imgsz/wd/warmup.
+--epochs 5  --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e5
+--epochs 40 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e40
+--epochs 80 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --name paper_e80
