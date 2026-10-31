@@ -326,6 +326,12 @@ _(re-runs and benchmark rows added as they finish)_
     effectively fixed at its starting value — the ultralytics transfer bug fully
     determines it in stock fine-tuning.
 - **10:01** `paper_e5_s1` started.
+- **10:47 paper_e5_s1 finished** (0.73 h), evaluated 10:55 (`eval_results/sweep_paper_e5_s1/`):
+  epochs 1–5 VisDrone 0.228 / 0.226 / 0.251 / 0.279 / **0.307**, novel OV 0.158 / 0.133 /
+  0.108 / 0.133 / **0.130** (all-class OV at e5 0.251 is the 1-box car flipping).
+  Seed 0 e5 was 0.299 / 0.142 → seed spread so far ±0.004 VisDrone, ±0.006 novel;
+  bias_e5's novel 0.162 sits above both.
+- **10:55** `paper_e5_s2` started.
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
