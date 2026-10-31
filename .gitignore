@@ -140,6 +140,13 @@ train/
 # Model weights (keep 5_epoch.pt)
 *.pt
 !5_epoch.pt
+*.onnx
+*.engine
+
+# Training runs / checkpoints / engines and their logs
+runs/
+eval_results/**/*.log
+eval_results/thor_benchmark_smoke/
 
 # Archives
 *.zip

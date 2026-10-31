@@ -1,10 +1,13 @@
 import argparse
+import contextlib
+import io
 import json
 import os
 import time
 from collections import OrderedDict
 from pathlib import Path
 
+import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from ultralytics import YOLOWorld
@@ -35,6 +38,10 @@ def run_inference(model, img_dir, coco_gt, args):
     total_time = 0.0
     img_ids = list(coco_gt.imgs.keys())
     num_images = len(img_ids)
+    # Model class index i is the i-th sorted category (get_classes_from_coco); map it
+    # back to the annotation's category id, which need not be 0-indexed (Roboflow
+    # exports start at 1).
+    cat_ids = sorted(coco_gt.getCatIds())
 
     for idx, img_id in enumerate(img_ids):
         img_info = coco_gt.imgs[img_id]
@@ -53,6 +60,7 @@ def run_inference(model, img_dir, coco_gt, args):
             max_det=args.max_det,
             verbose=False,
             device=args.device,
+            quantize=16 if getattr(args, "half", False) else None,
         )
         elapsed = time.time() - start
         total_time += elapsed
@@ -63,7 +71,7 @@ def run_inference(model, img_dir, coco_gt, args):
                 x1, y1, x2, y2 = box_xyxy.tolist()
                 predictions.append({
                     "image_id": img_id,
-                    "category_id": int(cls),
+                    "category_id": cat_ids[int(cls)],
                     "bbox": [x1, y1, x2 - x1, y2 - y1],
                     "score": float(conf),
                 })
@@ -120,6 +128,71 @@ def evaluate_coco(coco_gt, predictions, class_names):
     return metrics, per_class
 
 
+VISDRONE_CLASSES = {"pedestrian", "people", "bicycle", "car", "van",
+                    "truck", "tricycle", "awning-tricycle", "bus", "motor"}
+
+
+def evaluate_novel(coco_gt, predictions):
+    """mAP / mAP@50 over only the categories the model never saw in VisDrone training."""
+    novel_ids = [c["id"] for c in coco_gt.loadCats(coco_gt.getCatIds())
+                 if c["name"] not in VISDRONE_CLASSES]
+    preds = [p for p in predictions if p["category_id"] in novel_ids]
+    if not preds:
+        return {"mAP_novel": 0.0, "mAP_50_novel": 0.0}
+    coco_eval = COCOeval(coco_gt, coco_gt.loadRes(preds), "bbox")
+    coco_eval.params.catIds = novel_ids
+    coco_eval.evaluate()
+    coco_eval.accumulate()
+    coco_eval.summarize()
+    return {"mAP_novel": coco_eval.stats[0], "mAP_50_novel": coco_eval.stats[1]}
+
+
+def _bootstrap_sample(coco_gt, preds_by_img, img_ids, cat_ids):
+    """COCOeval stats[:2] on one resample. Images drawn twice get fresh ids, since
+    COCOeval de-duplicates imgIds and would silently drop the repeats."""
+    images, anns, dets = [], [], []
+    for new_id, old_id in enumerate(img_ids):
+        images.append(dict(coco_gt.imgs[old_id], id=new_id))
+        for a in coco_gt.imgToAnns[old_id]:
+            anns.append(dict(a, id=len(anns) + 1, image_id=new_id))
+        dets.extend(dict(p, image_id=new_id) for p in preds_by_img.get(old_id, []))
+    gt = COCO()
+    gt.dataset = {"images": images, "annotations": anns,
+                  "categories": coco_gt.dataset["categories"]}
+    gt.createIndex()
+    if not dets:
+        return 0.0, 0.0
+    coco_eval = COCOeval(gt, gt.loadRes(dets), "bbox")
+    coco_eval.params.catIds = cat_ids
+    coco_eval.evaluate()
+    coco_eval.accumulate()
+    coco_eval.summarize()
+    return coco_eval.stats[0], coco_eval.stats[1]
+
+
+def bootstrap_ci(coco_gt, predictions, n=1000, seed=0, novel_only=False):
+    """95% percentile CI on mAP and mAP@50 by resampling images with replacement."""
+    rng = np.random.default_rng(seed)
+    cats = coco_gt.loadCats(coco_gt.getCatIds())
+    cat_ids = [c["id"] for c in cats
+               if not (novel_only and c["name"] in VISDRONE_CLASSES)]
+    preds_by_img = {}
+    for p in predictions:
+        if p["category_id"] in cat_ids:
+            preds_by_img.setdefault(p["image_id"], []).append(p)
+    all_ids = np.array(sorted(coco_gt.getImgIds()))
+
+    stats = []
+    with contextlib.redirect_stdout(io.StringIO()):
+        for _ in range(n):
+            sample = rng.choice(all_ids, size=len(all_ids), replace=True)
+            stats.append(_bootstrap_sample(coco_gt, preds_by_img, sample, cat_ids))
+    stats = np.array(stats)
+    lo, hi = np.percentile(stats, [2.5, 97.5], axis=0)
+    suffix = "_novel" if novel_only else ""
+    return {f"mAP{suffix}_ci95": [lo[0], hi[0]], f"mAP_50{suffix}_ci95": [lo[1], hi[1]]}
+
+
 def print_comparison(all_results):
     """Print a side-by-side comparison table."""
     model_names = list(all_results.keys())
@@ -132,6 +205,8 @@ def print_comparison(all_results):
         ("mAP_small", "mAP Small"),
         ("mAP_medium", "mAP Medium"),
         ("mAP_large", "mAP Large"),
+        ("mAP_novel", "mAP Novel-only"),
+        ("mAP_50_novel", "mAP@.50 Novel-only"),
         ("fps", "FPS"),
     ]
 
@@ -202,7 +277,7 @@ def parse_args():
                         help="Path to COCO-format ground-truth annotations")
     parser.add_argument("--classes", nargs="+", default=None,
                         help="Override class prompts for set_classes() "
-                             "(order must match category_id in annotations, 0-indexed)")
+                             "(one per category, in ascending category_id order)")
     parser.add_argument("--base-weights", default="yolov8m-worldv2.pt",
                         help="Base model weights")
     parser.add_argument("--finetuned-weights", nargs="+", default=None,
@@ -217,6 +292,8 @@ def parse_args():
                         help="Max detections per image")
     parser.add_argument("--device", default="0",
                         help="Device: '0' for GPU, 'cpu' for CPU")
+    parser.add_argument("--bootstrap", type=int, default=0,
+                        help="Image-level bootstrap resamples for 95%% CIs (0 = off; ~1000)")
     parser.add_argument("--output", default="eval_results",
                         help="Directory to save results JSON")
     return parser.parse_args()
@@ -292,6 +369,14 @@ def main():
         print(f"  {len(predictions)} detections, {fps:.1f} FPS")
 
         metrics, per_class = evaluate_coco(coco_gt, predictions, classes)
+        metrics.update(evaluate_novel(coco_gt, predictions))
+        if args.bootstrap:
+            print(f"  Bootstrapping {args.bootstrap} resamples for 95% CIs...")
+            metrics.update(bootstrap_ci(coco_gt, predictions, n=args.bootstrap))
+            metrics.update(bootstrap_ci(coco_gt, predictions, n=args.bootstrap,
+                                        novel_only=True))
+            print("  " + "  ".join(f"{k}=[{v[0]:.3f}, {v[1]:.3f}]"
+                                   for k, v in metrics.items() if k.endswith("_ci95")))
 
         all_results[label] = {
             "metrics": metrics,

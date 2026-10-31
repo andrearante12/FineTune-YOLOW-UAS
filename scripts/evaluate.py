@@ -52,6 +52,7 @@ def run_inference(model, img_dir, coco_gt, args):
             max_det=args.max_det,
             verbose=False,
             device=args.device,
+            quantize=16 if getattr(args, "half", False) else None,
         )
         elapsed = time.time() - start
         total_time += elapsed

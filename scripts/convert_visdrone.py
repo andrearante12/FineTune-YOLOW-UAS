@@ -82,8 +82,7 @@ def convert_visdrone_to_yolo(img_dir, ann_dir, out_dir):
             
     return count
 
-# Using Absolute Paths for the 5090 Workstation environment
-base_path = '/mnt/andre/YOLO-World/datasets/VisDrone'
+base_path = 'datasets/VisDrone'
 
 for split in ['train', 'val']:
     print(f"\n--- Processing {split} set ---")

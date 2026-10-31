@@ -66,6 +66,13 @@ python tools/reparameterize_yoloworld.py   # Reparameterize for deployment
 python tools/generate_text_prompts.py       # Generate text embeddings
 ```
 
+## Notes
+
+- There is no test suite or linter configured. `scripts/test_frozen_weights.py` is a checkpoint-inspection snippet (hardcoded `5_epoch.pt`), not a test.
+- Scripts hardcode paths (weights like `5_epoch.pt`, `runs/detect/...`, and `/mnt/andre/...` in `scripts/fix_embeddings.py`); check them before running. `scripts/evaluate.py` takes argparse flags (`--val-images`, `--val-ann`, `--finetuned-weights`, `--imgsz`, `--output`); its default val annotations are `datasets/VisDrone/annotations/val.json`.
+- Other helpers: `scripts/convert_visdrone.py` (raw VisDrone annotations to YOLO format; run before `yolo_to_coco.py`), `scripts/extract_frames.py` (sample frames from video), `scripts/fix_embeddings.py` (regenerates cached CLIP text embeddings as a `{class_name: tensor}` dict for Ultralytics).
+- Three conda env files exist; `yoloworld_stable.yml` is the one to use.
+
 ## Architecture
 
 **Dual-path design:** The project supports two training/inference APIs:
@@ -90,7 +97,7 @@ python tools/generate_text_prompts.py       # Generate text embeddings
 ## Critical Design Decisions
 
 - **CLIP text encoder must stay frozen** during fine-tuning. Unfreezing it causes the model to overfit to VisDrone classes and lose open-vocabulary capability. In `scripts/finetune.py`, parameters with `"txt_model"` in their name have `requires_grad=False`.
-- **Short training is intentional.** Training beyond ~5 epochs degrades open-vocab performance. The 80-epoch config in `scripts/finetune.py` exists for experimentation but 5 epochs showed best balance (see `docs/RESULTS.md`).
+- **Short training is intentional.** Training beyond ~5 epochs degrades open-vocab performance. The 40-epoch config in `scripts/finetune.py` exists for experimentation but 5 epochs showed best balance (see `docs/RESULTS.md`).
 - **Descriptive prompts** like `"foreign object on driveway"` are used to catch objects not in any predefined class list. This is a core feature of the open-vocab approach.
 
 ## VisDrone Classes

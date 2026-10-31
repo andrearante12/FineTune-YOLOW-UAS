@@ -20,6 +20,7 @@ from evaluate_open_vocab import (
     get_classes_from_coco,
     run_inference as openvocab_run_inference,
     evaluate_coco as openvocab_evaluate_coco,
+    evaluate_novel,
 )
 
 # Set for fast lookup — VISDRONE_CLASSES from evaluate.py is a list
@@ -46,18 +47,19 @@ def parse_run_info(weights_dir):
     return parent, lr_str
 
 
-def compute_confidence_metrics(predictions, class_names, conf_threshold):
+def compute_confidence_metrics(predictions, class_names, cat_ids, conf_threshold):
     """Compute per-class detection counts and mean confidence above threshold.
 
     Args:
         predictions: list of COCO-format dicts with 'category_id' and 'score'
-        class_names: ordered list of class names (index = category_id)
+        class_names: ordered list of class names
+        cat_ids: annotation category id for each entry of class_names
         conf_threshold: only count detections at or above this confidence
     """
     per_class = {}
-    for cls_idx, cls_name in enumerate(class_names):
+    for cat_id, cls_name in zip(cat_ids, class_names):
         cls_preds = [p for p in predictions
-                     if p["category_id"] == cls_idx and p["score"] >= conf_threshold]
+                     if p["category_id"] == cat_id and p["score"] >= conf_threshold]
         count = len(cls_preds)
         mean_conf = (sum(p["score"] for p in cls_preds) / count) if count > 0 else 0.0
         per_class[cls_name] = {"count": count, "mean_conf": mean_conf}
@@ -119,6 +121,7 @@ def evaluate_checkpoint(weights_path, visdrone_gt, visdrone_img_dir,
     model.set_classes(openvocab_classes)
     ov_preds, ov_fps = openvocab_run_inference(model, openvocab_img_dir, openvocab_gt, eval_args)
     ov_metrics, ov_per_class = openvocab_evaluate_coco(openvocab_gt, ov_preds, openvocab_classes)
+    ov_metrics.update(evaluate_novel(openvocab_gt, ov_preds))
 
     return {
         "visdrone": {"metrics": vd_metrics, "per_class": vd_per_class, "fps": vd_fps},
@@ -193,6 +196,7 @@ def main():
     print("Loading OpenVocab ground-truth...")
     openvocab_gt = COCO(args.openvocab_ann)
     openvocab_classes = get_classes_from_coco(openvocab_gt)
+    openvocab_cat_ids = sorted(openvocab_gt.getCatIds())
     print(f"  {len(openvocab_gt.imgs)} images, {len(openvocab_gt.anns)} annotations")
     print(f"  Classes: {openvocab_classes}")
 
@@ -209,7 +213,7 @@ def main():
 
     # Compute base confidence metrics for retention comparison
     base_conf_metrics = compute_confidence_metrics(
-        base_results["openvocab"]["predictions"], openvocab_classes, args.conf_threshold
+        base_results["openvocab"]["predictions"], openvocab_classes, openvocab_cat_ids, args.conf_threshold
     )
     base_combined = compute_combined_score(
         base_vd_mAP, base_vd_mAP, 1.0,
@@ -264,7 +268,7 @@ def main():
 
             # Confidence retention metrics
             ckpt_conf_metrics = compute_confidence_metrics(
-                results["openvocab"]["predictions"], openvocab_classes, args.conf_threshold
+                results["openvocab"]["predictions"], openvocab_classes, openvocab_cat_ids, args.conf_threshold
             )
             retention, per_class_ret = compute_confidence_retention(
                 base_conf_metrics, ckpt_conf_metrics, openvocab_classes
@@ -331,7 +335,7 @@ def main():
             ov_mAP = results["openvocab"]["metrics"]["mAP"]
 
             ckpt_conf_metrics = compute_confidence_metrics(
-                results["openvocab"]["predictions"], openvocab_classes, args.conf_threshold
+                results["openvocab"]["predictions"], openvocab_classes, openvocab_cat_ids, args.conf_threshold
             )
             retention, per_class_ret = compute_confidence_retention(
                 base_conf_metrics, ckpt_conf_metrics, openvocab_classes
