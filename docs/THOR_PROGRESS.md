@@ -19,6 +19,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
 | bias_e5 (paper_e5 + pretrained cv4 biases kept) | 0.303 | 0.484 | 0.165 | 0.162 | +0.004 VisDrone, +0.020 novel vs paper_e5; seed noise TBD |
 | **lr1e-4_e10** (AdamW lr 1e-4, 10 ep, no averaging) | 0.304 | 0.484 | 0.309 | 0.202 | **matches WiSE-FT α0.7 frontier with plain training** |
+| lr2e-4_e10 (AdamW lr 2e-4, 10 ep) | 0.319 | 0.504 | 0.297 | 0.172 | on frontier (≈ WiSE α0.8) |
 | **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | paper: 40 ep 0.298, 80 ep 0.330; novel OV collapsed |
 | WiSE-FT base↔paper_e40 α=0.8 | 0.344 | 0.537 | 0.160 | 0.085 | beats paper_e40 on both axes (CPU eval) |
 | **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
@@ -425,6 +426,27 @@ _(re-runs and benchmark rows added as they finish)_
     would make it airtight.
   - Next idea (post-queue): WiSE-FT base ↔ lr1e-4_e10 to see if averaging stacks on top.
 - **16:08** `lr2e-4_e10` started.
+- **17:35 lr2e-4_e10 finished** (1.42 h), evaluated 17:51 (`eval_results/sweep_lr2e-4_e10/`):
+
+  | epoch | VisDrone mAP | mAP@50 | OV mAP | OV novel | novel@50 |
+  |---|---|---|---|---|---|
+  | 1 | 0.228 | 0.366 | 0.208 | 0.169 | 0.355 |
+  | 2 | 0.246 | 0.394 | 0.318 | 0.196 | 0.400 |
+  | 3 | 0.277 | 0.443 | 0.301 | 0.194 | 0.352 |
+  | 4 | 0.285 | 0.455 | 0.207 | 0.201 | 0.355 |
+  | 5 | 0.278 | 0.451 | 0.305 | 0.192 | 0.313 |
+  | 6 | 0.294 | 0.470 | 0.216 | 0.179 | 0.304 |
+  | 7 | 0.306 | 0.481 | 0.234 | 0.179 | 0.302 |
+  | 8 | 0.309 | 0.487 | 0.299 | 0.187 | 0.315 |
+  | 9 | 0.314 | 0.497 | 0.290 | 0.178 | 0.304 |
+  | 10 | **0.319** | **0.504** | 0.297 | **0.172** | 0.288 |
+
+  - On the frontier: ≈ WiSE base↔5_epoch α0.8 (0.315 / 0.175); clearly above WiSE
+    base↔paper_e40 α0.6 (0.317 / 0.109).
+  - LR grid so far (10 epochs, final): 2.5e-5 → 0.271 / 0.181; 1e-4 → 0.304 / 0.202;
+    2e-4 → 0.319 / 0.172; paper recipe (7.14e-4, 5 ep) → 0.302 / 0.125. LR is a smooth
+    VisDrone-vs-open-vocab dial; the paper's effective LR sits *inside* the frontier.
+- **17:51** `lr7.14e-4_e10` started.
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables
