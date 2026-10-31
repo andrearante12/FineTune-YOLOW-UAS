@@ -18,7 +18,10 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
 | bias_e5 (paper_e5 + pretrained cv4 biases kept) | 0.303 | 0.484 | 0.165 | 0.162 | +0.004 VisDrone, +0.020 novel vs paper_e5; seed noise TBD |
-| **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | best VisDrone so far (paper: 40 ep 0.298, 80 ep 0.330); novel OV collapsed |
+| **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | paper: 40 ep 0.298, 80 ep 0.330; novel OV collapsed |
+| WiSE-FT base↔paper_e40 α=0.8 | 0.344 | 0.537 | 0.160 | 0.085 | beats paper_e40 on both axes (CPU eval) |
+| **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
+| paper_e5, 3 seeds (mean ± std) | 0.302 ± 0.004 | 0.483 ± 0.003 | — | 0.125 ± 0.021 | novel OV varies a lot across seeds |
 
 **Thor deployment (paper Table 4 setting: imgsz 1280, batch 1, 120 W mode, frames in memory):**
 PyTorch FP32 **35 FPS**, PyTorch FP16 48–49 FPS, **TensorRT FP16 57 FPS with no accuracy
@@ -332,6 +335,32 @@ _(re-runs and benchmark rows added as they finish)_
   Seed 0 e5 was 0.299 / 0.142 → seed spread so far ±0.004 VisDrone, ±0.006 novel;
   bias_e5's novel 0.162 sits above both.
 - **10:55** `paper_e5_s2` started.
+- **11:41 paper_e5_s2 finished**, evaluated 11:50 (`eval_results/sweep_paper_e5_s2/`):
+  e5 VisDrone 0.302 / novel 0.102 / novel@50 0.168. **3-seed summary at epoch 5:**
+  VisDrone 0.299 / 0.307 / 0.302 → **0.302 ± 0.004**; novel OV 0.142 / 0.130 / 0.102 →
+  **0.125 ± 0.021**; novel@50 0.202 ± 0.032. VisDrone is very stable across seeds;
+  novel OV is not. bias_e5 (0.303 / 0.162) is +1.8 σ on novel — suggestive, not
+  conclusive from one bias run (would need bias seeds to claim it).
+- **11:45 WiSE-FT base ↔ paper_e40** (`eval_results/sweep_wise_paper_e40/`, CPU-only
+  inference; base gives identical numbers on CPU and GPU, 0.131 / 0.221):
+
+  | α | VisDrone mAP | mAP@50 | OV mAP | OV novel | novel@50 |
+  |---|---|---|---|---|---|
+  | 0.3 | 0.231 | 0.352 | 0.307 | 0.185 | 0.314 |
+  | 0.4 | 0.263 | 0.406 | 0.294 | 0.168 | 0.278 |
+  | 0.5 | 0.294 | 0.456 | 0.262 | 0.143 | 0.222 |
+  | 0.6 | 0.317 | 0.494 | 0.237 | 0.109 | 0.159 |
+  | 0.7 | 0.334 | 0.520 | 0.223 | 0.092 | 0.129 |
+  | 0.8 | 0.344 | 0.537 | 0.160 | 0.085 | 0.118 |
+  | 0.9 | **0.346** | **0.543** | 0.086 | 0.045 | 0.063 |
+  | 1.0 (paper_e40) | 0.341 | 0.538 | 0.037 | 0.007 | 0.012 |
+
+  - α=0.8–0.9 **beat the 40-epoch model on both axes**; α=0.9 is the best VisDrone
+    model so far (0.346 / 0.543), with some novel OV back (0.045 vs 0.007).
+  - Combined frontier: base↔5-epoch WiSE dominates for VisDrone ≤ ~0.315 (e.g. α0.8:
+    0.315 / novel 0.175 vs this sweep's α0.6: 0.317 / 0.109); base↔40-epoch WiSE owns
+    the high-VisDrone end (0.33–0.346). Weight averaging helps at both ends.
+- **11:50** `wise_seeds.sh` (WiSE-FT on the 3 paper_e5 seeds, VisDrone-only α rule) started.
 - **paper_e40 during training:** epoch 1 novel OV 0.123 (vs paper_e5 epoch 1: 0.229), epoch 2
   0.143, epoch 3 **0.091** (VisDrone mAP50 0.431 / 0.425 / 0.461). Likely cause of the
   epoch-1 difference: **mosaic augmentation.** ultralytics `close_mosaic=10` disables

@@ -21,7 +21,9 @@ def series_key(results_dir, label):
     'wise_5_epoch', anything else stands alone."""
     stem = re.sub(r"_?(a\d+\.\d+|e\d+)$", "", label)
     name = results_dir.removeprefix("sweep_")
-    return name if not stem else (stem if stem != label else label)
+    if not stem or stem == "wise_last":  # generic labels: the results dir names the run
+        return name
+    return stem
 
 
 def load_points(paths, ov_metric):
