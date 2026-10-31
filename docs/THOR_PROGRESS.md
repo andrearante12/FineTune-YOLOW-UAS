@@ -11,7 +11,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | Model | VisDrone mAP | VisDrone mAP@50 | OV mAP | OV mAP novel | Notes |
 |---|---|---|---|---|---|
 | Base yolov8m-worldv2 | 0.131 | 0.198 | 0.263 [0.221, 0.341] | 0.222 [0.206, 0.248] | paper reported OV 0.034; [95% bootstrap CI] |
-| 5_epoch.pt (paper) | 0.308 | 0.492 | 0.196 | 0.129 | paper reported OV 0.034; CIs pending |
+| 5_epoch.pt (paper) | 0.308 | 0.492 | 0.196 [0.149, 0.265] | 0.129 [0.112, 0.151] | paper reported OV 0.034 |
 | WiSE-FT α=0.6 (base↔5_epoch) | 0.295 | 0.462 | 0.338 | 0.222 | novel = base level |
 | **WiSE-FT α=0.7** | **0.308** | **0.485** | **0.329** | **0.209** | α picked by VisDrone-only rule (≤0.01 below α=1) |
 | WiSE-FT α=0.8 | 0.315 | 0.497 | 0.291 | 0.175 | beats 5_epoch on both axes |
@@ -142,6 +142,16 @@ _(re-runs and benchmark rows added as they finish)_
   [0.372, 0.442]. The 5_epoch novel 0.129 is far outside the base CI. (5_epoch CIs still
   computing — 4.4× more detections make each resample slower; run left going in
   parallel with training since it is CPU-only now.)
+- **21:55** Queue launched (`runs/sweep/queue.log`), detached from the session.
+- **22:10 5_epoch bootstrap CIs** (1000 resamples): OV mAP 0.196 [0.149, 0.265],
+  mAP@50 0.294 [0.248, 0.372], **novel 0.129 [0.112, 0.151]**, novel mAP@50 0.185
+  [0.162, 0.215]. Novel-only CIs of base vs 5_epoch **do not overlap** → the novel-class
+  loss is significant. All-class OV CIs **do overlap** (car/pedestrian dilute it), so the
+  manuscript should lead with the novel-only metric. (`eval_results/ov_bootstrap/`)
+- **22:08 paper_e5 epoch 1:** OV mAP 0.346 / novel 0.229 — *above* base — at VisDrone
+  mAP50 0.416. Unlike the 640 smoke test (−56% after 1 epoch, 1 warmup epoch at lr 2e-4,
+  warmup_bias_lr 0.1); here epoch 1 sits inside a 3-epoch warmup with bias warmup from 0.
+  Expect the OV drop as LR peaks in epochs 2–3.
 - **Queue order (as edited during your side session):** paper_e5 → benchmark →
   paper_e40 → bias_e5 → seeds s1, s2 → WiSE-FT on 3 seeds → LR grid → bias_e40 →
   freeze10_e5, freeze22_e5, freeze10_e40 → **paper_e80 last** (40-epoch curve informs
