@@ -102,13 +102,28 @@ def predict(model, name, imgs, cat_ids, args):
     return dets
 
 
-def score(name, gt, cats, imgs, dets):
+def cap_per_class(dets, k=10000):
+    """Fixed-AP protocol (Dave et al. 2021): top-k detections per class over the dataset."""
+    by_cat = {}
+    for d in dets:
+        by_cat.setdefault(d["category_id"], []).append(d)
+    out = []
+    for ds in by_cat.values():
+        out.extend(sorted(ds, key=lambda d: -d["score"])[:k])
+    return out
+
+
+def score(name, gt, cats, imgs, dets, fixed_ap=False):
     img_ids = [im["id"] for im in imgs]
     out = {}
     with contextlib.redirect_stdout(io.StringIO()):
         if name == "lvis":
             from lvis import LVISEval, LVISResults
-            ev = LVISEval(gt, LVISResults(gt, dets, max_dets=300), "bbox")
+            if fixed_ap:
+                ev = LVISEval(gt, LVISResults(gt, cap_per_class(dets), max_dets=-1), "bbox")
+                ev.params.max_dets = -1
+            else:
+                ev = LVISEval(gt, LVISResults(gt, dets, max_dets=300), "bbox")
             ev.params.img_ids = img_ids
             ev.run()
             out = {k: float(v) for k, v in ev.get_results().items()}
@@ -141,6 +156,13 @@ def main():
     p.add_argument("--max-det", type=int, default=300)
     p.add_argument("--device", default="0")
     p.add_argument("--limit", type=int, default=0, help="First N images only (smoke test)")
+    p.add_argument("--prompt-file", default=None,
+                   help="JSON list (one synonym list per category, in category-id order), "
+                        "e.g. data/texts/lvis_v1_class_texts.json; the first synonym is used")
+    p.add_argument("--fixed-ap", action="store_true",
+                   help="LVIS 'fixed AP': no per-image cap (predict --max-det dets/image), "
+                        "top 10k per class over the dataset")
+    p.add_argument("--tag", default="", help="Suffix for result keys, e.g. '_fixedap'")
     p.add_argument("--output", default="eval_results/standard_ov")
     args = p.parse_args()
 
@@ -161,18 +183,24 @@ def main():
         gt, cats, imgs = load_dataset(ds, args.limit)
         cat_ids = [c["id"] for c in cats]
         prompts = [prompt(c["name"]) for c in cats]
-        print(f"\n=== {ds}: {len(imgs)} images, {len(cats)} classes", flush=True)
+        if args.prompt_file:
+            texts = json.loads(Path(args.prompt_file).read_text())
+            if len(texts) != len(cats):
+                raise SystemExit(f"{args.prompt_file}: {len(texts)} entries, {len(cats)} classes")
+            prompts = [t[0] if isinstance(t, list) else t for t in texts]
+        print(f"\n=== {ds}{args.tag}: {len(imgs)} images, {len(cats)} classes", flush=True)
         for label, path in models:
-            key = f"{ds}/{label}"
+            key = f"{ds}{args.tag}/{label}"
             if key in results and not args.limit:
                 print(f"  {label}: cached"); continue
             t0 = time.time()
             model = YOLOWorld(path)
             model.set_classes(prompts)
             dets = predict(model, ds, imgs, cat_ids, args)
-            metrics = score(ds, gt, cats, imgs, dets)
+            metrics = score(ds, gt, cats, imgs, dets, fixed_ap=args.fixed_ap)
             metrics.update(weights=path, n_images=len(imgs), n_dets=len(dets),
-                           imgsz=args.imgsz, seconds=round(time.time() - t0))
+                           imgsz=args.imgsz, max_det=args.max_det, fixed_ap=args.fixed_ap,
+                           prompt_file=args.prompt_file, seconds=round(time.time() - t0))
             results[key] = metrics
             results_path.write_text(json.dumps(results, indent=2))
             print(f"  {label:<18} " + "  ".join(f"{k}={v:.3f}" for k, v in metrics.items()

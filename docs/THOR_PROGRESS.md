@@ -645,6 +645,31 @@ _(re-runs and benchmark rows added as they finish)_
     frozen 0.274 / 0.173 → head only 0.227 / 0.209. More freezing = more open-vocab, less
     VisDrone; neither beats WiSE-FT at equal VisDrone accuracy.
 - **10:10** `lr1e-4_e40_bias` started.
+- **15:45 Plan change (your call): paper_e80 dropped** (`runs/sweep/SKIP_paper_e80`) —
+  paper_e40 already shows the collapse (novel ~0 from epoch 20, LVIS/COCO ~1–2%) and the
+  VisDrone plateau (0.341 from epoch 35); an 80-epoch high-LR run can't produce a better
+  model. Its ~13 GPU-hours go to a third queue (`configs/thor_sweeps/final_after_e80_drop.txt`,
+  started by `runs/sweep/chain_queue3.sh`, which waits on the second queue's **PID** —
+  not a pgrep pattern — after the 03:07 self-match bug):
+  1. `lr1e-4_e10_bias_s1`, `_s2` — error bars for the best plain-training recipe.
+  2. WiSE-FT (VisDrone-only α rule) on the 3 lr1e-4_e10_bias seeds and on lr1e-4_e40_bias.
+  3. `scripts/final_pass.sh`: standard benchmarks for the late models → **clean checkpoints**
+     (`scripts/export_checkpoints.py` → `checkpoints/<label>.pt`, EMA FP16, ~55 MB each,
+     + `checkpoints/index.json` with source run and sha256) → TensorRT benchmark of the
+     recommended models → **annotated videos** (`scripts/annotate_video.py` →
+     `deliverables/videos/`: per-model full-res + 2×2 comparison of base / paper 5-ep /
+     WiSE α0.7 / lr1e-4_bias) → LVIS cross-check with fixed AP + YOLO-World's prompt file
+     → paired bootstrap vs base.
+  - Video source: `~/vlm_on_jetson/data/videos/DJI_0162.MP4` (your 1080p, 138 s drone
+    clip of the landing-pad driveway scene — the OVB VID_01–03 videos aren't on this
+    machine). Prompts = `scripts/run_inference.py`'s landing-zone list + "dog".
+    Smoke-tested on CPU (5 frames): already shows base labelling the car "foreign object
+    on landing pad" while WiSE α0.7 gets "car 0.75" but hallucinates "dog" on grass.
+  - `evaluate_standard_ov.py` gained `--fixed-ap` (top-10k per class, no per-image cap) and
+    `--prompt-file` (YOLO-World's `data/texts/lvis_v1_class_texts.json`; first synonym per
+    class — YOLO-World averages synonym embeddings, ultralytics takes one string).
+  - Videos (*.mp4) and checkpoints (*.pt) are gitignored (size); `checkpoints/index.json`
+    is committed.
 - **03:07 Chain-script bug (fixed by hand, ~7 min lost).** `runs/sweep/chain_queue2.sh`
   waited with `pgrep -f "run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt"`, which
   also matched its own launcher shell (whose command line contained the script's source),
