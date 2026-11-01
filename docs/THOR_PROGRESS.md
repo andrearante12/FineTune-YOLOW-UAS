@@ -503,6 +503,45 @@ _(re-runs and benchmark rows added as they finish)_
     trade all their extra VisDrone for open-vocab.
   - Single seed per LR (the paper-LR seed spread is ±0.004 VisDrone, ±0.021 novel).
 - **21:47** `bias_e40` started.
+- **2026-11-01 02:52 (EDT) bias_e40 finished** (5.88 h, 1 attempt), evaluated 03:06
+  (`eval_results/sweep_bias_e40/`). Paper metrics vs paper_e40 (same LR/seed, stock bias):
+
+  | epoch | paper_e40 VisDrone / novel | bias_e40 VisDrone / novel |
+  |---|---|---|
+  | 1 | 0.231 / 0.122 | 0.235 / 0.139 |
+  | 2 | 0.236 / 0.143 | 0.240 / 0.173 |
+  | 3 | 0.256 / 0.091 | 0.265 / 0.078 |
+  | 4 | 0.249 / 0.081 | 0.261 / 0.119 |
+  | 5 | 0.265 / 0.040 | 0.269 / 0.118 |
+  | 6 | 0.249 / 0.082 | 0.274 / 0.077 |
+  | 7 | 0.295 / 0.030 | 0.296 / 0.088 |
+  | 8 | 0.292 / 0.079 | 0.295 / 0.050 |
+  | 9 | 0.304 / 0.021 | 0.279 / 0.023 |
+  | 10 | 0.303 / 0.039 | 0.297 / 0.016 |
+  | 15 | 0.312 / 0.041 | 0.320 / 0.004 |
+  | 20 | 0.332 / 0.004 | 0.317 / 0.009 |
+  | 25 | 0.321 / 0.002 | 0.336 / 0.001 |
+  | 30 | 0.333 / 0.015 | 0.336 / 0.008 |
+  | 35 | 0.341 / 0.015 | 0.341 / 0.034 |
+  | 40 | 0.341 / 0.007 | **0.345 / 0.023** (mAP@50 0.544) |
+
+  - **Pre-set decision rule (≥ +0.03 novel averaged over epochs 10–40): FAILS.** Mean
+    novel 0.014 (bias) vs 0.017 (stock); mean VisDrone 0.327 vs 0.326. At the paper LR
+    the bias fix delays the open-vocab loss (epochs 1–8 mean novel ≈0.105 vs ≈0.071) but
+    does not prevent the long-run collapse; the LR dominates.
+  - Final checkpoint: VisDrone 0.345 / 0.544 — best of any *trained* model (ties WiSE
+    α0.9 on paper_e40, 0.346). Novel 0.023 vs 0.007, still collapsed.
+  - Consequence: no bias-specific seed confirmation is added. The bias-fixed follow-up
+    runs proceed as planned — the fix costs nothing and the open question is whether it
+    helps at the low LR (lr1e-4_*_bias), where open-vocab survives.
+- **03:07 Chain-script bug (fixed by hand, ~7 min lost).** `runs/sweep/chain_queue2.sh`
+  waited with `pgrep -f "run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt"`, which
+  also matched its own launcher shell (whose command line contained the script's source),
+  so it would never have fired. Killed it and its launcher at 03:13 (EST — DST ended at
+  02:00, so log timestamps jump back an hour here), wrote a `[chain]` note in
+  `queue.log`, removed `SKIP_paper_e80`, and started
+  `run_queue.sh configs/thor_sweeps/standard_ov_then_e80.txt` detached. Standard
+  benchmarks running from 03:13 EST.
 - **20:35 Re-prioritized to the bias-fixed baseline (your call: upgrade, not
   replicate).** Restoring the pretrained cv4 biases is correct by construction (it
   undoes a loading bug), cost nothing on VisDrone in bias_e5, and at worst does nothing,
