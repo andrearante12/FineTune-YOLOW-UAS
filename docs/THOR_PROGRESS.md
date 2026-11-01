@@ -630,7 +630,21 @@ _(re-runs and benchmark rows added as they finish)_
   - **Dominated by WiSE-FT** (base↔5_epoch α0.5: 0.275 / 0.225) and about equal to the very
     low LR run (lr2.5e-5_e10: 0.271 / 0.181). Freezing the backbone is a less efficient
     way to keep open-vocab ability than averaging weights after full fine-tuning.
-- **09:37** `freeze22_e5_bias` (head only) started.
+- **09:37** `freeze22_e5_bias` (head only) started (verified: model.0–21 frozen; the
+  WorldDetect head model.22 trains except its fixed dfl).
+- **10:01 freeze22_e5_bias finished** (**0.38 h** — about half the unfrozen time),
+  evaluated 10:10 (`eval_results/sweep_freeze22_e5_bias/`): epochs 1–5 VisDrone 0.196 /
+  0.203 / 0.220 / 0.223 / **0.227**, novel OV 0.160 / 0.178 / 0.181 / 0.199 / **0.209**
+  (novel@50 0.395 = base 0.394).
+  - Head-only training keeps base-level open-vocab ability but gets only ~55% of the
+    full fine-tune's VisDrone gain (+0.096 vs +0.173 over base).
+  - Just inside the frontier: WiSE base↔5_epoch α0.4 gives 0.248 / 0.217 (better on both).
+    VisDrone was still rising at epoch 5, so a longer head-only run may move along the
+    frontier cheaply — candidate follow-up, not queued.
+  - Freezing summary (bias-fixed, 5 ep, paper LR): unfrozen 0.304 / 0.139 → backbone
+    frozen 0.274 / 0.173 → head only 0.227 / 0.209. More freezing = more open-vocab, less
+    VisDrone; neither beats WiSE-FT at equal VisDrone accuracy.
+- **10:10** `lr1e-4_e40_bias` started.
 - **03:07 Chain-script bug (fixed by hand, ~7 min lost).** `runs/sweep/chain_queue2.sh`
   waited with `pgrep -f "run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt"`, which
   also matched its own launcher shell (whose command line contained the script's source),
