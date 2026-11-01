@@ -619,7 +619,18 @@ _(re-runs and benchmark rows added as they finish)_
   - Bias-fixed + WiSE α0.7 reaches base-level novel OV (0.220 vs 0.222) at VisDrone 0.301 —
     the best 5-epoch recipe on OVB, with error bars.
   - VisDrone-only α rule picked 0.7 in 6/6 seeds → robust selection rule.
-- **08:56** `freeze10_e5_bias` started.
+- **08:56** `freeze10_e5_bias` started (verified: model.0–9 frozen = whole backbone, 117
+  tensors, plus the always-frozen head dfl).
+- **09:28 freeze10_e5_bias finished** (**0.50 h** — 30% faster than unfrozen, no backbone
+  gradients), evaluated 09:37 (`eval_results/sweep_freeze10_e5_bias/`):
+  epochs 1–5 VisDrone 0.221 / 0.219 / 0.251 / 0.267 / **0.274**, novel OV 0.141 / 0.193 /
+  0.168 / 0.188 / **0.173** (novel@50 0.309).
+  - vs bias_e5 (3 seeds, unfrozen): VisDrone −0.030 (0.274 vs 0.304 ± 0.002), novel
+    +0.034 (0.173 vs 0.139 ± 0.019) — trades VisDrone for open-vocab.
+  - **Dominated by WiSE-FT** (base↔5_epoch α0.5: 0.275 / 0.225) and about equal to the very
+    low LR run (lr2.5e-5_e10: 0.271 / 0.181). Freezing the backbone is a less efficient
+    way to keep open-vocab ability than averaging weights after full fine-tuning.
+- **09:37** `freeze22_e5_bias` (head only) started.
 - **03:07 Chain-script bug (fixed by hand, ~7 min lost).** `runs/sweep/chain_queue2.sh`
   waited with `pgrep -f "run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt"`, which
   also matched its own launcher shell (whose command line contained the script's source),
