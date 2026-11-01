@@ -28,6 +28,8 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
 | paper_e5, 3 seeds (mean ± std) | 0.302 ± 0.004 | 0.483 ± 0.003 | 0.181 ± 0.063 | 0.125 ± 0.021 | novel OV varies a lot across seeds |
 | **WiSE-FT α=0.7 on paper_e5, 3 seeds** | **0.299 ± 0.002** | — | 0.303 ± 0.056 | **0.209 ± 0.031** | α chosen on VisDrone only (=0.7 in all 3 seeds); OVB held out → **headline result** |
+| bias_e5, 3 seeds | 0.304 ± 0.002 | — | 0.149 ± 0.016 | 0.139 ± 0.019 | bias fix at paper LR: +0.01 novel, not significant |
+| **WiSE-FT α=0.7 on bias_e5, 3 seeds** | **0.301 ± 0.002** | — | 0.327 ± 0.025 | **0.220 ± 0.024** | base-level novel; α=0.7 in all 3 seeds |
 
 **Thor deployment (paper Table 4 setting: imgsz 1280, batch 1, 120 W mode, frames in memory):**
 PyTorch FP32 **35 FPS**, PyTorch FP16 48–49 FPS, **TensorRT FP16 57 FPS with no accuracy
@@ -597,6 +599,27 @@ _(re-runs and benchmark rows added as they finish)_
     collapse; at low LR, where the model stays near the pretrained solution, the correct
     starting bias carries through.
 - **06:19** `bias_e5_s1` started.
+- **07:03 / 07:56 bias_e5_s1, bias_e5_s2 finished** (0.71 h each), evaluated
+  (`eval_results/sweep_bias_e5_s{1,2}/`). Epoch-5 VisDrone / novel: s0 0.303 / 0.162,
+  s1 0.304 / 0.126, s2 0.306 / 0.131.
+- **08:56 WiSE-FT on the 3 bias seeds** (`eval_results/wise_seeds_bias_summary.json`,
+  `eval_results/sweep_wise_bias_e5{,_s1,_s2}/`); α\* = 0.7 in every seed again (6/6
+  seeds overall with the stock ones):
+
+  | 5-epoch recipe, 3 seeds (mean ± std) | VisDrone mAP | OV novel |
+  |---|---|---|
+  | stock fine-tune | 0.302 ± 0.004 | 0.125 ± 0.021 |
+  | bias-fixed fine-tune | 0.304 ± 0.002 | 0.139 ± 0.019 |
+  | stock + WiSE α0.7 | 0.299 ± 0.002 | 0.209 ± 0.031 |
+  | **bias-fixed + WiSE α0.7** | **0.301 ± 0.002** | **0.220 ± 0.024** |
+  | base | 0.131 | 0.222 |
+
+  - At the paper LR the bias fix adds ~+0.01 novel on average (~0.7 σ): same direction
+    every time, not significant with 3 seeds. bias_e5 seed 0's 0.162 was partly luck.
+  - Bias-fixed + WiSE α0.7 reaches base-level novel OV (0.220 vs 0.222) at VisDrone 0.301 —
+    the best 5-epoch recipe on OVB, with error bars.
+  - VisDrone-only α rule picked 0.7 in 6/6 seeds → robust selection rule.
+- **08:56** `freeze10_e5_bias` started.
 - **03:07 Chain-script bug (fixed by hand, ~7 min lost).** `runs/sweep/chain_queue2.sh`
   waited with `pgrep -f "run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt"`, which
   also matched its own launcher shell (whose command line contained the script's source),
