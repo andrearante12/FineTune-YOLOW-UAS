@@ -21,6 +21,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | **lr1e-4_e10** (AdamW lr 1e-4, 10 ep, no averaging) | 0.304 | 0.484 | 0.309 | 0.202 | **matches WiSE-FT α0.7 frontier with plain training** |
 | lr2e-4_e10 (AdamW lr 2e-4, 10 ep) | 0.319 | 0.504 | 0.297 | 0.172 | on frontier (≈ WiSE α0.8) |
 | lr7.14e-4_e10 (paper LR, 10 ep) | 0.327 | 0.519 | 0.251 | 0.131 | 2× epochs vs paper_e5: +0.025 VisDrone, same novel OV |
+| lr1.5e-3_e10 (2× paper LR, 10 ep) | 0.323 | 0.510 | 0.090 | 0.000 | open-vocab gone, no VisDrone gain |
 | **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | paper: 40 ep 0.298, 80 ep 0.330; novel OV collapsed |
 | WiSE-FT base↔paper_e40 α=0.8 | 0.344 | 0.537 | 0.160 | 0.085 | beats paper_e40 on both axes (CPU eval) |
 | **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
@@ -480,6 +481,28 @@ _(re-runs and benchmark rows added as they finish)_
   1247 s of silence; attempt 2 resumed from `last.pt` (end of epoch 2) at 20:22:43, so
   only the partial epoch 3 (~10 min) plus the 20-min watchdog window were lost. Watching
   whether it recurs.
+- **21:31 lr1.5e-3_e10 finished** (attempt 2 after the stall), evaluated 21:47
+  (`eval_results/sweep_lr1.5e-3_e10/`): VisDrone 0.194 / 0.140 / 0.202 / 0.224 / 0.245 /
+  0.263 / 0.273 / 0.300 / 0.315 / **0.323**; novel OV 0.173 / 0.035 / 0.028 / 0.001 …
+  **0.000** at epoch 10. Epoch 2 shows instability (VisDrone *drops* 0.194 → 0.140 as
+  the LR peaks).
+- **LR grid complete** (AdamW, 10 epochs, final epoch; same seed, stock biases):
+
+  | lr0 | VisDrone mAP | mAP@50 | OV novel | novel@50 |
+  |---|---|---|---|---|
+  | 2.5e-5 | 0.271 | 0.431 | 0.181 | 0.374 |
+  | **1e-4** | **0.304** | 0.484 | **0.202** | 0.371 |
+  | 2e-4 | 0.319 | 0.504 | 0.172 | 0.288 |
+  | 7.14e-4 (paper, effective) | 0.327 | 0.519 | 0.131 | 0.201 |
+  | 1.5e-3 | 0.323 | 0.510 | **0.000** | 0.000 |
+  | *ref: paper_e5 (7.14e-4, 5 ep, 3 seeds)* | *0.302 ± 0.004* | | *0.125 ± 0.021* | |
+
+  - LR is a monotone VisDrone ↔ open-vocab dial up to the paper's LR; above it, open-vocab
+    collapses completely with no further VisDrone gain (0.323 < 0.327).
+  - 1e-4 and 2e-4 lie on the WiSE-FT frontier; 2.5e-5 is dominated; 7.14e-4 and 1.5e-3
+    trade all their extra VisDrone for open-vocab.
+  - Single seed per LR (the paper-LR seed spread is ±0.004 VisDrone, ±0.021 novel).
+- **21:47** `bias_e40` started.
 - **20:35 Re-prioritized to the bias-fixed baseline (your call: upgrade, not
   replicate).** Restoring the pretrained cv4 biases is correct by construction (it
   undoes a loading bug), cost nothing on VisDrone in bias_e5, and at worst does nothing,
