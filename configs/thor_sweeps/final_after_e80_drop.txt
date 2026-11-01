@@ -1,0 +1,16 @@
+# Third queue (user, 2026-11-01 ~15:45): paper_e80 dropped; use the time to confirm the
+# best recipe and produce deliverables. Started automatically when
+# standard_ov_then_e80.txt finishes (runs/sweep/chain_queue3.sh waits on its PID).
+
+# 1. Two more seeds of the best plain-training recipe (lr1e-4_e10_bias is seed 0).
+--epochs 10 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --seed 1 --name lr1e-4_e10_bias_s1
+--epochs 10 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --seed 2 --name lr1e-4_e10_bias_s2
+
+# 2. WiSE-FT (VisDrone-only alpha rule) on the low-LR runs: 3 seeds of the 10-epoch
+#    recipe -> mean +- std, and the 40-epoch run.
+! scripts/wise_seeds.sh eval_results/wise_seeds_lr1e-4_bias_summary.json lr1e-4_e10_bias lr1e-4_e10_bias_s1 lr1e-4_e10_bias_s2 > runs/sweep/wise_seeds_lr1e-4_bias.log 2>&1
+! scripts/wise_seeds.sh eval_results/wise_lr1e-4_e40_bias_summary.json lr1e-4_e40_bias > runs/sweep/wise_lr1e-4_e40_bias.log 2>&1
+
+# 3. Deliverables: standard benchmarks for late models, checkpoints/, TensorRT benchmark,
+#    annotated videos, LVIS cross-check, paired bootstrap.
+! scripts/final_pass.sh > runs/sweep/final_pass.log 2>&1
