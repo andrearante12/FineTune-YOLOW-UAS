@@ -23,6 +23,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | lr2e-4_e10 (AdamW lr 2e-4, 10 ep) | 0.319 | 0.504 | 0.297 | 0.172 | on frontier (≈ WiSE α0.8) |
 | lr7.14e-4_e10 (paper LR, 10 ep) | 0.327 | 0.519 | 0.251 | 0.131 | 2× epochs vs paper_e5: +0.025 VisDrone, same novel OV |
 | lr1.5e-3_e10 (2× paper LR, 10 ep) | 0.323 | 0.510 | 0.090 | 0.000 | open-vocab gone, no VisDrone gain |
+| **lr1e-4_e40_bias** (lr 1e-4, 40 ep, biases kept) | **0.338** | **0.532** | 0.178 | **0.171** | **≈ paper_e40 VisDrone with 24× its novel OV** — new frontier point |
 | **paper_e40** (re-run, same optimizer, 40 ep) | **0.341** | **0.538** | 0.037 | **0.007** | paper: 40 ep 0.298, 80 ep 0.330; novel OV collapsed |
 | WiSE-FT base↔paper_e40 α=0.8 | 0.344 | 0.537 | 0.160 | 0.085 | beats paper_e40 on both axes (CPU eval) |
 | **WiSE-FT base↔paper_e40 α=0.9** | **0.346** | **0.543** | 0.086 | 0.045 | **best VisDrone so far** (CPU eval) |
@@ -645,6 +646,38 @@ _(re-runs and benchmark rows added as they finish)_
     frozen 0.274 / 0.173 → head only 0.227 / 0.209. More freezing = more open-vocab, less
     VisDrone; neither beats WiSE-FT at equal VisDrone accuracy.
 - **10:10** `lr1e-4_e40_bias` started.
+- **16:14 lr1e-4_e40_bias finished** (6.03 h, 1 attempt), evaluated 16:39
+  (`eval_results/sweep_lr1e-4_e40_bias/`), vs paper_e40 (lr 7.14e-4, stock bias):
+
+  | epoch | paper_e40 VisDrone / novel | lr1e-4_e40_bias VisDrone / novel | mAP@50 / novel@50 |
+  |---|---|---|---|
+  | 1 | 0.231 / 0.122 | 0.219 / 0.118 | 0.351 / 0.242 |
+  | 2 | 0.236 / 0.143 | 0.257 / 0.133 | 0.413 / 0.271 |
+  | 3 | 0.256 / 0.091 | 0.278 / 0.122 | 0.443 / 0.228 |
+  | 4 | 0.249 / 0.081 | 0.285 / 0.120 | 0.449 / 0.227 |
+  | 5 | 0.265 / 0.040 | 0.289 / 0.133 | 0.464 / 0.245 |
+  | 6 | 0.249 / 0.082 | 0.294 / 0.132 | 0.470 / 0.230 |
+  | 7 | 0.295 / 0.030 | 0.304 / 0.121 | 0.482 / 0.213 |
+  | 8 | 0.292 / 0.079 | 0.302 / 0.129 | 0.481 / 0.218 |
+  | 9 | 0.304 / 0.021 | 0.307 / 0.137 | 0.487 / 0.229 |
+  | 10 | 0.303 / 0.039 | 0.308 / 0.125 | 0.486 / 0.204 |
+  | 15 | 0.312 / 0.041 | 0.322 / 0.123 | 0.508 / 0.193 |
+  | 20 | 0.332 / 0.004 | 0.326 / 0.139 | 0.517 / 0.214 |
+  | 25 | 0.321 / 0.002 | 0.330 / 0.135 | 0.524 / 0.203 |
+  | 30 | 0.333 / 0.015 | 0.335 / 0.154 | 0.528 / 0.224 |
+  | 35 | 0.341 / 0.015 | 0.338 / 0.159 | 0.531 / 0.260 |
+  | 40 | 0.341 / 0.007 | **0.338 / 0.171** | **0.532 / 0.277** |
+
+  - **A low LR avoids the open-vocab collapse instead of delaying it.** Same VisDrone
+    accuracy as paper_e40 (0.338 vs 0.341) with 24× the novel-class mAP (0.171 vs 0.007).
+    Novel OV holds at 0.12–0.14 through the mosaic phase and *rises* to 0.17 once mosaic
+    turns off (epochs 31–40).
+  - **New Pareto point at the high-VisDrone end:** WiSE α0.8 on paper_e40 reaches only
+    0.344 / 0.085; lr1e-4_e40_bias gives up 0.006 VisDrone for 2× the novel OV.
+  - Best-recipe dial (lr 1e-4 + bias fix): 10 epochs → 0.305 / 0.221 (max open-vocab);
+    40 epochs → 0.338 / 0.171 (max VisDrone with open-vocab intact).
+  - Its LVIS/COCO scores come in the late benchmark step; WiSE-FT on it is in queue 3.
+- **16:39** `freeze10_e40_bias` started.
 - **15:45 Plan change (your call): paper_e80 dropped** (`runs/sweep/SKIP_paper_e80`) —
   paper_e40 already shows the collapse (novel ~0 from epoch 20, LVIS/COCO ~1–2%) and the
   VisDrone plateau (0.341 from epoch 35); an 80-epoch high-LR run can't produce a better
