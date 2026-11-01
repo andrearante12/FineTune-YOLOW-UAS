@@ -13,7 +13,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | Base yolov8m-worldv2 | 0.131 | 0.198 | 0.263 [0.221, 0.341] | 0.222 [0.206, 0.248] | paper reported OV 0.034; [95% bootstrap CI] |
 | 5_epoch.pt (paper) | 0.308 | 0.492 | 0.196 [0.149, 0.265] | 0.129 [0.112, 0.151] | paper reported OV 0.034 |
 | WiSE-FT α=0.6 (base↔5_epoch) | 0.295 | 0.462 | 0.338 | 0.222 | novel = base level |
-| **WiSE-FT α=0.7** | **0.308** | **0.485** | **0.329** | **0.209** | α picked by VisDrone-only rule (≤0.01 below α=1); novel **not significantly below base** (paired CI [−0.035, +0.011]) |
+| **WiSE-FT α=0.7** | **0.308** | **0.485** | **0.329** | **0.209** | α picked by VisDrone-only rule (≤0.01 below α=1); novel **not significantly below base** (paired CI [−0.035, +0.011]); LVIS 55% / COCO 59% of base (plain 5-ep: 19% / 18%) |
 | WiSE-FT α=0.8 | 0.315 | 0.497 | 0.291 | 0.175 | beats 5_epoch on both axes |
 | 5_epoch + post-hoc restored cv4 biases | 0.279 | 0.454 | 0.204 | 0.137 | restoring biases after training hurts VisDrone, ~no OV gain |
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
@@ -534,6 +534,42 @@ _(re-runs and benchmark rows added as they finish)_
   - Consequence: no bias-specific seed confirmation is added. The bias-fixed follow-up
     runs proceed as planned — the fix costs nothing and the open question is whether it
     helps at the low LR (lr1e-4_*_bias), where open-vocab survives.
+- **03:13–04:33 (EST) Standard zero-shot open-vocab benchmarks**, 9 models, imgsz 640
+  (`eval_results/standard_ov/results.json`, log `runs/sweep/standard_ov.log`):
+
+  | Model | LVIS AP (% base) | APr | APc | APf | COCO AP (% base) | ODinW-aerial AP, 74 img | ODinW novel | ODinW test, 7 img |
+  |---|---|---|---|---|---|---|---|---|
+  | base | 0.162 (100%) | 0.070 | 0.099 | 0.234 | 0.419 (100%) | 0.049 | 0.034 | 0.076 |
+  | ft5_paper (5_epoch.pt) | 0.031 (19%) | 0.010 | 0.025 | 0.039 | 0.074 (18%) | **0.118** | 0.061 | 0.121 |
+  | **wise5_a0.7** | **0.088 (55%)** | **0.036** | 0.057 | 0.126 | **0.248 (59%)** | 0.110 | **0.064** | 0.112 |
+  | lr1e-4_e10 | 0.075 (46%) | 0.021 | 0.048 | 0.109 | 0.226 (54%) | 0.093 | 0.057 | 0.103 |
+  | lr2e-4_e10 | 0.057 (35%) | 0.029 | 0.033 | 0.083 | 0.175 (42%) | 0.086 | 0.046 | 0.104 |
+  | bias_e5 | 0.031 (19%) | 0.012 | 0.024 | 0.040 | 0.082 (19%) | 0.075 | 0.037 | 0.089 |
+  | paper_e40 | 0.001 (1%) | 0.000 | 0.001 | 0.002 | 0.007 (2%) | 0.057 | 0.014 | 0.040 |
+  | wise40_a0.9 | 0.002 (2%) | 0.000 | 0.002 | 0.003 | 0.010 (2%) | 0.061 | 0.014 | 0.043 |
+  | bias_e40 | 0.002 (1%) | 0.000 | 0.002 | 0.002 | 0.007 (2%) | 0.053 | 0.007 | 0.062 |
+
+  - **General open-vocab loss is far bigger than OVB showed.** The paper's 5-epoch model
+    keeps only ~19% of base on LVIS and COCO (OVB novel: 58%). LVIS and COCO agree closely.
+  - **WiSE-FT α0.7 keeps ~55–59%** — 3× the plain fine-tune, and the best of all models at
+    paper-level VisDrone accuracy. On OVB it kept ~94%: OVB's UAS classes are easier to
+    retain than LVIS's long tail, so the manuscript should not generalize OVB retention.
+  - **WiSE-FT beats low-LR training on the general benchmarks** (LVIS 0.088 vs 0.075, APr
+    0.036 vs 0.021; COCO 0.248 vs 0.226), although they tied on OVB → WiSE-FT is the
+    stronger recommendation.
+  - **Bias fix: no general benefit** (bias_e5 = ft5_paper on LVIS, +0.008 on COCO); with
+    bias_e40 failing its rule, the bias effect looks cosmetic.
+  - **40-epoch models are closed-vocabulary** (LVIS ≤ 0.002), incl. WiSE α0.9 on e40.
+  - **Aerial transfer goes the other way:** on ODinW AerialMaritimeDrone, short VisDrone
+    fine-tuning *improves* zero-shot detection, including classes VisDrone lacks (novel
+    boat/dock/jetski/lift 0.034 → 0.061–0.064; all-class 0.049 → 0.110–0.118); 40-epoch
+    models lose it again (novel 0.007–0.014). Small set → directional only.
+  - **Absolute LVIS numbers are below YOLO-World's published ones** (base 0.162 standard AP
+    vs ~0.32–0.35 reported) — expected from standard (not "fixed") AP with a 300-det cap and
+    raw category names (YOLO-World uses curated synonym prompts). COCO base 0.419 is in the
+    expected range, so the pipeline is sound. Cross-check with fixed AP + YOLO-World's
+    prompt file is a post-queue TODO; relative comparisons are protocol-consistent.
+- **04:33** `lr1e-4_e10_bias` started.
 - **03:07 Chain-script bug (fixed by hand, ~7 min lost).** `runs/sweep/chain_queue2.sh`
   waited with `pgrep -f "run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt"`, which
   also matched its own launcher shell (whose command line contained the script's source),
