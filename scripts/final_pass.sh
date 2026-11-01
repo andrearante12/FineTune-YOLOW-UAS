@@ -47,14 +47,20 @@ step "3. TensorRT benchmark of recommended models (FP16, 640 + 1280, with accura
 $PY scripts/benchmark_thor.py --accuracy --runtimes torch-fp16 trt-fp16 --imgsz 640 1280 \
     --iters 300 --output eval_results/thor_benchmark_final \
     --weights checkpoints/wise5_a0.7.pt checkpoints/wise5bias_a0.7.pt \
-              checkpoints/lr1e-4_e10_bias.pt checkpoints/wise_lr1e-4_e40_bias.pt \
+              checkpoints/lr1e-4_e10_bias.pt checkpoints/lr1e-4_e40_bias.pt \
+              checkpoints/wise_lr1e-4_e40_bias.pt \
     || echo "[final] step 3 FAILED"
 
 step "4. annotated videos ($VIDEO)"
+# 2x2 comparison + full-res for: base, the paper's model, and the two recommended recipes
 $PY scripts/annotate_video.py --video "$VIDEO" --output deliverables/videos \
     --models base=yolov8m-worldv2.pt paper_5ep=5_epoch.pt \
-             wise_a0.7=checkpoints/wise5_a0.7.pt lr1e-4_bias=checkpoints/lr1e-4_e10_bias.pt \
+             wise_a0.7=checkpoints/wise5_a0.7.pt lr1e-4_bias_e10=checkpoints/lr1e-4_e10_bias.pt \
     || echo "[final] step 4 FAILED"
+# full-res only for the high-VisDrone recommendation
+$PY scripts/annotate_video.py --video "$VIDEO" --output deliverables/videos \
+    --models lr1e-4_bias_e40=checkpoints/lr1e-4_e40_bias.pt \
+    || echo "[final] step 4b FAILED"
 
 step "5. LVIS cross-check: fixed AP + YOLO-World prompts (base, paper 5ep, WiSE)"
 $PY scripts/evaluate_standard_ov.py --datasets lvis --fixed-ap --max-det 1000 \
