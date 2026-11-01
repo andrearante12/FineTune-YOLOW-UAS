@@ -473,6 +473,13 @@ _(re-runs and benchmark rows added as they finish)_
     the LR decays (0.13–0.14 by epochs 8–10). Novel OV tracks the *current* LR more than
     the epoch count — consistent with paper_e40 (near zero while LR stays high).
 - **19:36** `lr1.5e-3_e10` started.
+- **20:22 First unattended stall, recovered automatically.** `lr1.5e-3_e10` froze at
+  epoch 3, 94% (~20:01) with **no** driver `NV_ERR_NO_MEMORY` lines (the single one at
+  20:22:07 coincides with the kill) and 119 GB MemAvailable afterwards — a silent hang
+  (dataloader or GPU), not the Friday memory-pressure stall. The watchdog killed it after
+  1247 s of silence; attempt 2 resumed from `last.pt` (end of epoch 2) at 20:22:43, so
+  only the partial epoch 3 (~10 min) plus the 20-min watchdog window were lost. Watching
+  whether it recurs.
 - **20:35 Re-prioritized to the bias-fixed baseline (your call: upgrade, not
   replicate).** Restoring the pretrained cv4 biases is correct by construction (it
   undoes a loading bug), cost nothing on VisDrone in bias_e5, and at worst does nothing,
