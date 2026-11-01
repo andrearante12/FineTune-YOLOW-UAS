@@ -19,6 +19,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | **paper_e5** (re-run, fixed AdamW 7.14e-4, Thor) | 0.299 | 0.479 | 0.161 | 0.142 | reproduces 5_epoch.pt within ~0.01 |
 | bias_e5 (paper_e5 + pretrained cv4 biases kept) | 0.303 | 0.484 | 0.165 | 0.162 | +0.004 VisDrone, +0.020 novel vs paper_e5; seed noise TBD |
 | **lr1e-4_e10** (AdamW lr 1e-4, 10 ep, no averaging) | 0.304 | 0.484 | 0.309 | 0.202 | **matches WiSE-FT α0.7 frontier with plain training** |
+| **lr1e-4_e10_bias** (lr 1e-4, 10 ep, pretrained biases kept) | **0.305** | 0.484 | 0.273 | **0.221** | **100% of base OVB novel**; +0.02 vs stock lr1e-4 in 9/10 epochs |
 | lr2e-4_e10 (AdamW lr 2e-4, 10 ep) | 0.319 | 0.504 | 0.297 | 0.172 | on frontier (≈ WiSE α0.8) |
 | lr7.14e-4_e10 (paper LR, 10 ep) | 0.327 | 0.519 | 0.251 | 0.131 | 2× epochs vs paper_e5: +0.025 VisDrone, same novel OV |
 | lr1.5e-3_e10 (2× paper LR, 10 ep) | 0.323 | 0.510 | 0.090 | 0.000 | open-vocab gone, no VisDrone gain |
@@ -570,6 +571,32 @@ _(re-runs and benchmark rows added as they finish)_
     expected range, so the pipeline is sound. Cross-check with fixed AP + YOLO-World's
     prompt file is a post-queue TODO; relative comparisons are protocol-consistent.
 - **04:33** `lr1e-4_e10_bias` started.
+- **06:03 lr1e-4_e10_bias finished** (1.48 h), evaluated 06:19
+  (`eval_results/sweep_lr1e-4_e10_bias/`), vs stock lr1e-4_e10 (same seed/LR):
+
+  | epoch | lr1e-4_e10 VisDrone / novel | lr1e-4_e10_bias VisDrone / novel |
+  |---|---|---|
+  | 1 | 0.215 / 0.164 | 0.216 / 0.187 |
+  | 2 | 0.236 / 0.187 | 0.240 / 0.185 |
+  | 3 | 0.267 / 0.183 | 0.260 / 0.214 |
+  | 4 | 0.272 / 0.200 | 0.272 / 0.222 |
+  | 5 | 0.286 / 0.207 | 0.287 / 0.226 |
+  | 6 | 0.286 / 0.192 | 0.284 / 0.220 |
+  | 7 | 0.294 / 0.203 | 0.293 / 0.215 |
+  | 8 | 0.297 / 0.209 | 0.296 / 0.235 |
+  | 9 | 0.303 / 0.203 | 0.304 / 0.221 |
+  | 10 | 0.304 / 0.202 | **0.305 / 0.221** (novel@50 0.394 = base) |
+
+  - **At low LR the bias fix helps consistently:** novel higher in 9/10 epochs, mean
+    +0.020 (0.215 vs 0.195), VisDrone identical at every epoch. Single seed, but the
+    epoch-paired consistency is stronger evidence than one endpoint.
+  - **lr1e-4_e10_bias keeps 100% of base OVB novel (0.221 vs 0.222)** while VisDrone
+    goes 0.131 → 0.305 — on OVB it edges WiSE α0.7 (0.308 / 0.209). LVIS/COCO for it
+    come in the post-training benchmark step (WiSE α0.7 led stock lr1e-4 there).
+  - Reconciles the bias results: at the paper LR (bias_e40) the fix only delays the
+    collapse; at low LR, where the model stays near the pretrained solution, the correct
+    starting bias carries through.
+- **06:19** `bias_e5_s1` started.
 - **03:07 Chain-script bug (fixed by hand, ~7 min lost).** `runs/sweep/chain_queue2.sh`
   waited with `pgrep -f "run_queue.sh configs/thor_sweeps/paper_fixed_optim.txt"`, which
   also matched its own launcher shell (whose command line contained the script's source),
