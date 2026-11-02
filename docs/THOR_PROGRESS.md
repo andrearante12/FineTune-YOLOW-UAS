@@ -6,6 +6,60 @@ All open-vocab (OV) numbers here use the **fixed** evaluator (see Finding 1). OV
 195-image open-vocab benchmark; "novel" = its 6 classes not in VisDrone (excludes car,
 pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1280.
 
+## Summary (read this first) — Mon 2026-11-02 05:30
+
+**Recommended model: `checkpoints/wise_lr1e-4_e10_bias.pt`** — fine-tune 10 epochs with AdamW
+lr 1e-4 and the pretrained contrastive-head biases restored, then WiSE-FT with the base model
+at α = 0.8 (α chosen on VisDrone val only).
+
+| | VisDrone mAP / @50 | OVB novel mAP | LVIS AP (% base) | COCO AP (% base) | Thor TRT-FP16 @1280 |
+|---|---|---|---|---|---|
+| base yolov8m-worldv2 | 0.131 / 0.198 | 0.222 | 0.162 (100%) | 0.419 (100%) | 57 FPS |
+| paper `5_epoch.pt` | 0.308 / 0.492 | 0.129 | 0.031 (19%) | 0.074 (18%) | 57 FPS |
+| **recommended (3 seeds)** | **0.298 ± 0.000** / 0.47 | **0.253 ± 0.013** | **0.125 (77%)** | **0.325 (78%)** | **56 FPS, lossless** |
+| max-VisDrone with OV kept: WiSE α0.9 on `lr1e-4_e40_bias` | **0.340** / 0.531 | 0.179 | (α0.8: 0.088, 54%) | (α0.8: 0.249, 59%) | 56 FPS |
+
+**What changes in the paper**
+1. **OV numbers were wrong** (category-id bug): base OVB 0.263 (not 0.034); the paper's
+   5-epoch model *loses* novel-class OV (0.222 → 0.129, paired-bootstrap CI of the drop
+   [−0.124, −0.070]) and keeps only ~18–19% of base on LVIS/COCO. "Fully preserves
+   open-vocab" must go.
+2. **The epoch comparison was confounded** (optimizer=auto: AdamW 7.14e-4 at 5 epochs, SGD
+   0.01 at 40/80). With one optimizer: 40 epochs → VisDrone 0.341 (better than the paper's
+   80-epoch 0.330) but OV collapses to ~0 on every benchmark.
+3. **Learning rate is the lever, not epochs or freezing.** At lr 1e-4 a 40-epoch run reaches
+   VisDrone 0.338 with OVB novel 0.171 (paper LR: 0.007); freezing the backbone only delays
+   the collapse. LR grid: 2.5e-5 → 1.5e-3 is a smooth VisDrone↔OV dial up to the paper's LR,
+   and pure loss beyond it.
+4. **WiSE-FT (weight averaging) recovers most of the loss for free** and stacks with low LR:
+   paper recipe + WiSE α0.7: novel 0.209 ± 0.031 (3 seeds); low LR + bias fix + WiSE α0.8:
+   novel 0.253 ± 0.013 (above base) with LVIS/COCO 77–78% of base.
+5. **Thor deployment:** TensorRT FP16 @1280 gives 55–57 FPS for every recommended model with
+   no accuracy loss (paper: Orin Nano 12.5, Xavier 9.4 FPS). INT8 isn't worth it.
+6. **Aerial transfer:** short/low-LR VisDrone fine-tuning *improves* zero-shot detection on
+   unseen aerial classes (ODinW AerialMaritimeDrone novel 0.034 → ~0.06); long high-LR
+   training loses it.
+
+**Caveats to state:** OVB is small (195 images; "car" has a single box → use novel-only OV);
+LVIS absolute numbers are below YOLO-World's published ones (protocol/port differences —
+quote % of base); the bias fix is a small effect (significant only at low LR); single-seed
+results are marked as such below.
+
+**Deliverables**
+- `checkpoints/` (9 models, ~55 MB, `index.json` with sha256) — gitignored; on the USB drive.
+- `deliverables/videos/` — 8 annotated 1080p videos of your DJI landing-pad clip (per model +
+  `DJI_0162_comparison_4models.mp4`); figure `eval_results/figures/dji0162_frame2076_4models.jpg`.
+- `eval_results/` — every metric (JSON/CSV), Pareto plots, Thor benchmark tables.
+- USB backup `/mnt/thor_backup/FineTune-YOLOW-UAS_backup/` (see its README.txt) incl. OVB
+  images, all run weights, git bundle, checksums.
+- Still running at the time of writing: paired-bootstrap CIs vs base for the recommended
+  models (step 6 of `scripts/final_pass.sh`); the drive re-syncs automatically afterwards.
+
+**Bugs/incidents this weekend (all handled):** driver OOM stall (fixed config), one silent
+training hang (watchdog auto-resumed), a chain-script self-match (started queue by hand,
+~7 min lost), a comparison-video overwrite (regenerated), and ultralytics silently
+installing its own TensorRT wheel (benchmark used 10.16.1.11; recorded).
+
 ## Current results
 
 | Model | VisDrone mAP | VisDrone mAP@50 | OV mAP | OV mAP novel | Notes |
@@ -817,6 +871,9 @@ _(re-runs and benchmark rows added as they finish)_
   renames 4b's grid to `DJI_0162_comparison_lowLR_e40_vs_wise.mp4` once 4b finishes and
   regenerates the 4-model grid as `DJI_0162_comparison_4models.mp4` (inference only,
   alongside steps 5–6).
+  - 04:55 step 4b done (`DJI_0162_lr1e-4_bias_e40.mp4`, `DJI_0162_wise_lr1e-4_bias_e10.mp4`);
+    05:07 4-model grid regenerated (`DJI_0162_comparison_4models.mp4`); 4b's grid kept as
+    `DJI_0162_comparison_lowLR_e40_vs_wise.mp4`. 8 videos, 4153 frames each, 4.3 GB.
   - Qualitative frame (`eval_results/figures/dji0162_frame2076_4models.jpg`, frame 2076):
     base misses the pedestrian and labels the pad "foreign object on landing pad"; the paper
     5-epoch model misses the soccer ball, calls the red bag "car" and hallucinates large
@@ -824,6 +881,25 @@ _(re-runs and benchmark rows added as they finish)_
     0.96, pedestrian 0.60, ball 0.77 and flags the bag as "foreign object on driveway"
     0.24 with no false positives** — the generic-prompt behaviour the paper relies on.
     (Single frame — illustrative, not a metric.)
+- **05:18 LVIS cross-check** (fixed AP: top-10k dets per class, no per-image cap, ≤1000
+  dets/image; YOLO-World's `lvis_v1_class_texts.json` prompts, first synonym; results under
+  `lvis_fixedap_ywprompts/*` in `eval_results/standard_ov/results.json`):
+
+  | Model | LVIS AP standard (% base) | LVIS fixed AP + YW prompts (% base) | APr / APc / APf (fixed) |
+  |---|---|---|---|
+  | base | 0.162 | 0.190 | 0.061 / 0.136 / 0.261 |
+  | ft5_paper | 0.031 (19%) | 0.028 (15%) | 0.009 / 0.022 / 0.036 |
+  | wise5_a0.7 | 0.088 (55%) | 0.086 (45%) | 0.021 / 0.056 / 0.124 |
+
+  - The protocol raises base (0.162 → 0.190) but **still sits well below YOLO-World's
+    published LVIS minival AP for this size (~0.32–0.35)**. Remaining gap most likely:
+    YOLO-World averages text embeddings over each class's synonyms (ultralytics
+    `set_classes` takes one string) and this is the ultralytics port, not the mmdet
+    reference implementation. → **Do not quote our absolute LVIS numbers as comparable to
+    the YOLO-World paper; quote % of base under one protocol.**
+  - Ranking and gap sizes hold under both protocols (paper model 15–19% of base, WiSE
+    45–55%), so the retention claims are protocol-robust.
+- **05:18** Paired bootstrap (step 6, last) started.
 - **01:56 Backup to USB drive** (your request; the 28.7 GB `jetsoninstaller-r39.2.1` stick,
   wiped and formatted FAT32 `THOR_BACKUP` by you, mounted at `/mnt/thor_backup`).
   `scripts/backup_to_drive.sh` (re-runnable, rsync) → `FineTune-YOLOW-UAS_backup/`: git
