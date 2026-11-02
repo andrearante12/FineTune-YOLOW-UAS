@@ -6,7 +6,7 @@ All open-vocab (OV) numbers here use the **fixed** evaluator (see Finding 1). OV
 195-image open-vocab benchmark; "novel" = its 6 classes not in VisDrone (excludes car,
 pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1280.
 
-## Summary (read this first) — Mon 2026-11-02 05:30
+## Summary (read this first) — Mon 2026-11-02 05:30, updated 07:00 (all runs complete)
 
 **Recommended model: `checkpoints/wise_lr1e-4_e10_bias.pt`** — fine-tune 10 epochs with AdamW
 lr 1e-4 and the pretrained contrastive-head biases restored, then WiSE-FT with the base model
@@ -33,7 +33,8 @@ at α = 0.8 (α chosen on VisDrone val only).
    and pure loss beyond it.
 4. **WiSE-FT (weight averaging) recovers most of the loss for free** and stacks with low LR:
    paper recipe + WiSE α0.7: novel 0.209 ± 0.031 (3 seeds); low LR + bias fix + WiSE α0.8:
-   novel 0.253 ± 0.013 (above base) with LVIS/COCO 77–78% of base.
+   novel 0.253 ± 0.013 with LVIS/COCO 77–78% of base — **significantly above base on novel
+   classes** (paired bootstrap CI of the difference [+0.004, +0.046]).
 5. **Thor deployment:** TensorRT FP16 @1280 gives 55–57 FPS for every recommended model with
    no accuracy loss (paper: Orin Nano 12.5, Xavier 9.4 FPS). INT8 isn't worth it.
 6. **Aerial transfer:** short/low-LR VisDrone fine-tuning *improves* zero-shot detection on
@@ -52,8 +53,13 @@ results are marked as such below.
 - `eval_results/` — every metric (JSON/CSV), Pareto plots, Thor benchmark tables.
 - USB backup `/mnt/thor_backup/FineTune-YOLOW-UAS_backup/` (see its README.txt) incl. OVB
   images, all run weights, git bundle, checksums.
-- Still running at the time of writing: paired-bootstrap CIs vs base for the recommended
-  models (step 6 of `scripts/final_pass.sh`); the drive re-syncs automatically afterwards.
+- **Paired bootstrap vs base (novel-class OVB mAP difference, 95% CI, 1000 shared image
+  resamples; `eval_results/ov_paired_bootstrap{,_final}/`):** paper 5_epoch [−0.124, −0.070]
+  (worse); WiSE α0.7 [−0.035, +0.011] (≈ base); WiSE α0.7 + bias [−0.015, +0.025] (≈ base);
+  lr1e-4_e10_bias [−0.024, +0.020] (≈ base); **recommended wise_lr1e-4_e10_bias
+  [+0.004, +0.046] — significantly *better* than base** (98.9% of resamples ≥ 0);
+  wise_lr1e-4_e40_bias (VisDrone 0.332) [−0.054, −0.008] (slightly worse).
+- All runs finished Mon 06:55; the queue is empty and the Thor is idle.
 
 **Bugs/incidents this weekend (all handled):** driver OOM stall (fixed config), one silent
 training hang (watchdog auto-resumed), a chain-script self-match (started queue by hand,
