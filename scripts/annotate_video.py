@@ -45,6 +45,9 @@ def main():
     p.add_argument("--stride", type=int, default=1, help="Use every Nth frame")
     p.add_argument("--max-frames", type=int, default=0)
     p.add_argument("--no-full", action="store_true", help="Only write the comparison grid")
+    p.add_argument("--grid-name", default="comparison",
+                   help="Grid video is <video stem>_<grid-name>.mp4; use distinct names "
+                        "for separate runs into the same --output (or 'none' to skip it)")
     p.add_argument("--output", default="deliverables/videos")
     args = p.parse_args()
 
@@ -72,8 +75,8 @@ def main():
         label: cv2.VideoWriter(str(out_dir / f"{stem}_{label}.mp4"), fourcc, fps, (w, h))
         for label, _ in models}
     grid = None
-    if 2 <= len(models) <= 4:
-        grid = cv2.VideoWriter(str(out_dir / f"{stem}_comparison.mp4"), fourcc, fps, (w, h))
+    if 2 <= len(models) <= 4 and args.grid_name != "none":
+        grid = cv2.VideoWriter(str(out_dir / f"{stem}_{args.grid_name}.mp4"), fourcc, fps, (w, h))
 
     i = written = 0
     while True:

@@ -808,6 +808,22 @@ _(re-runs and benchmark rows added as they finish)_
   - **Recommended deployment: wise_lr1e-4_e10_bias, TensorRT FP16 @1280 — 56 FPS, VisDrone
     0.297, OVB novel 0.247 (> base 0.222), LVIS 77% / COCO 78% of base.**
 - **04:34** Annotated videos started.
+- **04:48 Videos (step 4) done** — `deliverables/videos/DJI_0162_{base,paper_5ep,wise_a0.7,
+  lr1e-4_bias_e10}.mp4`, 4153 frames each, 0.57–0.66 GB, 1080p, conf 0.10, imgsz 1280.
+  **Bug (mine):** step 4b (2 extra full-res videos) also wrote a 2-model grid to the same
+  `DJI_0162_comparison.mp4`, overwriting the 4-model comparison. Fixed `annotate_video.py`
+  (`--grid-name`, default `comparison`; `none` skips it); did not edit the running
+  `final_pass.sh` (bash reads scripts incrementally). `runs/sweep/regen_comparison.sh`
+  renames 4b's grid to `DJI_0162_comparison_lowLR_e40_vs_wise.mp4` once 4b finishes and
+  regenerates the 4-model grid as `DJI_0162_comparison_4models.mp4` (inference only,
+  alongside steps 5–6).
+  - Qualitative frame (`eval_results/figures/dji0162_frame2076_4models.jpg`, frame 2076):
+    base misses the pedestrian and labels the pad "foreign object on landing pad"; the paper
+    5-epoch model misses the soccer ball, calls the red bag "car" and hallucinates large
+    "dog" boxes on shadows; WiSE α0.7 also hallucinates "dog"; **lr1e-4_bias_e10 gets pad
+    0.96, pedestrian 0.60, ball 0.77 and flags the bag as "foreign object on driveway"
+    0.24 with no false positives** — the generic-prompt behaviour the paper relies on.
+    (Single frame — illustrative, not a metric.)
 - **01:56 Backup to USB drive** (your request; the 28.7 GB `jetsoninstaller-r39.2.1` stick,
   wiped and formatted FAT32 `THOR_BACKUP` by you, mounted at `/mnt/thor_backup`).
   `scripts/backup_to_drive.sh` (re-runnable, rsync) → `FineTune-YOLOW-UAS_backup/`: git
