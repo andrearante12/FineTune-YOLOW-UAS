@@ -20,6 +20,7 @@ pedestrian). VisDrone mAP is COCO mAP@[.5:.95] on the 548-image val set. imgsz 1
 | bias_e5 (paper_e5 + pretrained cv4 biases kept) | 0.303 | 0.484 | 0.165 | 0.162 | +0.004 VisDrone, +0.020 novel vs paper_e5; seed noise TBD |
 | **lr1e-4_e10** (AdamW lr 1e-4, 10 ep, no averaging) | 0.304 | 0.484 | 0.309 | 0.202 | **matches WiSE-FT α0.7 frontier with plain training** |
 | **lr1e-4_e10_bias** (lr 1e-4, 10 ep, pretrained biases kept) | **0.305** | 0.484 | 0.273 | **0.221** | **100% of base OVB novel**; +0.02 vs stock lr1e-4 in 9/10 epochs |
+| **lr1e-4_e10_bias, 3 seeds** | **0.304 ± 0.001** | 0.483 ± 0.002 | — | **0.215 ± 0.007** | **most robust recipe**: ties best WiSE, 3–4× lower variance; LVIS 49% / COCO 59% (seed 0) |
 | lr2e-4_e10 (AdamW lr 2e-4, 10 ep) | 0.319 | 0.504 | 0.297 | 0.172 | on frontier (≈ WiSE α0.8) |
 | lr7.14e-4_e10 (paper LR, 10 ep) | 0.327 | 0.519 | 0.251 | 0.131 | 2× epochs vs paper_e5: +0.025 VisDrone, same novel OV |
 | lr1.5e-3_e10 (2× paper LR, 10 ep) | 0.323 | 0.510 | 0.090 | 0.000 | open-vocab gone, no VisDrone gain |
@@ -722,6 +723,24 @@ _(re-runs and benchmark rows added as they finish)_
     little on aerial ODinW (0.059 vs base 0.049) — updating the backbone is what learns the
     aerial features that transfer to novel aerial classes.
   - freeze10_e40_bias collapses on general categories too (LVIS 3%, COCO 2%).
+- **2026-11-02 01:33 lr1e-4_e10_bias seeds done** (s1 23:30, s2 01:17; 1.42–1.47 h each),
+  evaluated (`eval_results/sweep_lr1e-4_e10_bias_s{1,2}/`). Epoch-10 VisDrone / mAP@50 /
+  novel / novel@50: s0 0.305 / 0.484 / 0.221 / 0.394, s1 0.303 / 0.481 / 0.208 / 0.371,
+  s2 0.305 / 0.484 / 0.216 / 0.396. **3-seed: VisDrone 0.304 ± 0.001, novel 0.215 ±
+  0.007** (novel@50 0.387 ± 0.014).
+
+  | recipe (3 seeds) | VisDrone mAP | OV novel |
+  |---|---|---|
+  | paper recipe (7.14e-4, 5 ep) | 0.302 ± 0.004 | 0.125 ± 0.021 |
+  | + WiSE α0.7 | 0.299 ± 0.002 | 0.209 ± 0.031 |
+  | + bias fix + WiSE α0.7 | 0.301 ± 0.002 | 0.220 ± 0.024 |
+  | **lr 1e-4 + bias fix, 10 ep (no averaging)** | **0.304 ± 0.001** | **0.215 ± 0.007** |
+  | base | 0.131 | 0.222 |
+
+  - **Most robust recipe:** ties the best WiSE recipe on novel OV (within noise), slightly
+    higher VisDrone, and 3–4× smaller seed variance, from a single training run. Keeps
+    97% of base OVB novel ability at 2.3× base VisDrone mAP.
+- **01:33** WiSE-FT on the 3 lr1e-4_e10_bias seeds started.
 - **22:03** Second queue finished (paper_e80 skipped). `chain_queue3.sh` fired at 22:03:50
   (PID-wait works) → `lr1e-4_e10_bias_s1` started.
 - **15:45 Plan change (your call): paper_e80 dropped** (`runs/sweep/SKIP_paper_e80`) —
