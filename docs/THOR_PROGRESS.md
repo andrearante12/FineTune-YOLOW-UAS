@@ -741,6 +741,23 @@ _(re-runs and benchmark rows added as they finish)_
     higher VisDrone, and 3–4× smaller seed variance, from a single training run. Keeps
     97% of base OVB novel ability at 2.3× base VisDrone mAP.
 - **01:33** WiSE-FT on the 3 lr1e-4_e10_bias seeds started.
+- **02:24 WiSE-FT on lr1e-4_e10_bias, 3 seeds** (`eval_results/wise_seeds_lr1e-4_bias_summary.json`,
+  `eval_results/sweep_wise_lr1e-4_e10_bias{,_s1,_s2}/`). VisDrone-only rule picks
+  **α\* = 0.8 in all 3 seeds** (vs 0.7 for the paper recipe — the low-LR model is closer
+  to base). Per seed VisDrone / novel: 0.298 / 0.246, 0.298 / 0.267, 0.299 / 0.245.
+
+  | recipe (3 seeds) | VisDrone mAP | OV novel |
+  |---|---|---|
+  | lr 1e-4 + bias fix, 10 ep | 0.304 ± 0.001 | 0.215 ± 0.007 |
+  | **lr 1e-4 + bias fix + WiSE α0.8** | **0.298 ± 0.000** | **0.253 ± 0.013** |
+  | base | 0.131 | 0.222 |
+
+  - **Gains stack: low LR + bias fix + weight averaging puts novel-class OV *above* base
+    (0.253 vs 0.222, every seed) at 2.3× base VisDrone** — best OVB result of the study.
+    Cost vs the non-averaged run: −0.006 VisDrone.
+  - Added `wise_lr1e-4_e10_bias` (α0.8, seed 0) to the final pass's TensorRT benchmark,
+    full-res video and paired bootstrap.
+- **02:24** WiSE-FT on lr1e-4_e40_bias started.
 - **01:56 Backup to USB drive** (your request; the 28.7 GB `jetsoninstaller-r39.2.1` stick,
   wiped and formatted FAT32 `THOR_BACKUP` by you, mounted at `/mnt/thor_backup`).
   `scripts/backup_to_drive.sh` (re-runnable, rsync) → `FineTune-YOLOW-UAS_backup/`: git
