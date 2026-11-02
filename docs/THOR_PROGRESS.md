@@ -774,6 +774,40 @@ _(re-runs and benchmark rows added as they finish)_
     ability** (vs WiSE α0.8 on paper_e40: 0.344 / 0.085).
   - Final pass uses α\*=0.8 (pre-registered VisDrone-only rule) for `wise_lr1e-4_e40_bias`.
 - **02:41** Final pass started (`runs/sweep/final_pass.log`).
+- **03:07 Final-pass standard benchmarks + checkpoint export.** WiSE models (same protocol as
+  the earlier standard-OV tables):
+
+  | Model | LVIS AP (% base) | APr | COCO AP (% base) | ODinW-aerial AP / novel (74 img) |
+  |---|---|---|---|---|
+  | wise5bias_a0.7 | 0.088 (55%) | 0.040 | 0.254 (61%) | 0.083 / 0.043 |
+  | **wise_lr1e-4_e10_bias (α0.8)** | **0.125 (77%)** | **0.043** | **0.325 (78%)** | 0.097 / **0.060** |
+  | wise_lr1e-4_e40_bias (α0.8) | 0.088 (54%) | 0.032 | 0.249 (59%) | **0.104** / 0.054 |
+
+  - **wise_lr1e-4_e10_bias keeps 77–78% of base general open-vocab ability** (paper model:
+    18–19%) at VisDrone 0.298, with novel OVB above base and the aerial ODinW gain intact →
+    best model of the study on every open-vocab benchmark at paper-level VisDrone accuracy.
+  - Averaging the 40-epoch low-LR run more than doubles its general retention (LVIS 0.039 →
+    0.088, COCO 0.124 → 0.249) at VisDrone 0.332.
+  - `checkpoints/`: 9 models exported (~55 MB each) + `checkpoints/index.json` (committed).
+- **04:34 Final TensorRT benchmark done** (24/24 configs, no failures;
+  `eval_results/thor_benchmark_final/benchmark_120W.{csv,json}`; 120 W, 300 iters, same method
+  as the 02:25 table, accuracy re-scored per runtime):
+
+  | Model | Runtime | imgsz | FPS | p99 ms | FPS/W | VisDrone mAP | OV novel |
+  |---|---|---|---|---|---|---|---|
+  | wise5_a0.7 | torch-fp16 / **trt-fp16** | 1280 | 48 / **57** | 23.5 / 22.0 | 0.90 / 0.85 | 0.306 / 0.307 | 0.210 / 0.200 |
+  | wise5bias_a0.7 | torch-fp16 / **trt-fp16** | 1280 | 48 / **56** | 23.1 / 22.1 | 0.88 / 0.95 | 0.298 / 0.298 | 0.229 / 0.231 |
+  | lr1e-4_e10_bias | torch-fp16 / **trt-fp16** | 1280 | 49 / **55** | 23.3 / 22.0 | 0.85 / 0.92 | 0.303 / 0.303 | 0.222 / 0.221 |
+  | **wise_lr1e-4_e10_bias** | torch-fp16 / **trt-fp16** | 1280 | 49 / **56** | 23.4 / 22.0 | 0.84 / 1.04 | 0.297 / **0.297** | 0.246 / **0.247** |
+  | lr1e-4_e40_bias | torch-fp16 / **trt-fp16** | 1280 | 49 / **56** | 23.5 / 21.7 | 0.82 / 0.80 | 0.336 / 0.337 | 0.171 / 0.161 |
+  | wise_lr1e-4_e40_bias | torch-fp16 / **trt-fp16** | 1280 | 48 / **56** | 23.7 / 22.3 | 0.85 / 0.84 | 0.329 / 0.330 | 0.194 / 0.185 |
+
+  (640 px rows in the CSV: 112–127 FPS PyTorch FP16, 159–162 FPS TensorRT FP16.)
+  - **TensorRT FP16 is lossless for every recommended model** (VisDrone identical; novel within
+    0.01) at 55–57 FPS @1280 on Thor.
+  - **Recommended deployment: wise_lr1e-4_e10_bias, TensorRT FP16 @1280 — 56 FPS, VisDrone
+    0.297, OVB novel 0.247 (> base 0.222), LVIS 77% / COCO 78% of base.**
+- **04:34** Annotated videos started.
 - **01:56 Backup to USB drive** (your request; the 28.7 GB `jetsoninstaller-r39.2.1` stick,
   wiped and formatted FAT32 `THOR_BACKUP` by you, mounted at `/mnt/thor_backup`).
   `scripts/backup_to_drive.sh` (re-runnable, rsync) → `FineTune-YOLOW-UAS_backup/`: git
