@@ -758,6 +758,22 @@ _(re-runs and benchmark rows added as they finish)_
   - Added `wise_lr1e-4_e10_bias` (α0.8, seed 0) to the final pass's TensorRT benchmark,
     full-res video and paired bootstrap.
 - **02:24** WiSE-FT on lr1e-4_e40_bias started.
+- **02:41 WiSE-FT base ↔ lr1e-4_e40_bias** (`eval_results/sweep_wise_lr1e-4_e40_bias/`,
+  `eval_results/wise_lr1e-4_e40_bias_summary.json`):
+
+  | α | VisDrone mAP | mAP@50 | OV novel | novel@50 |
+  |---|---|---|---|---|
+  | 0.5 | 0.265 | 0.410 | 0.188 | 0.342 |
+  | 0.6 | 0.293 | 0.456 | 0.190 | 0.349 |
+  | 0.7 | 0.315 | 0.492 | 0.196 | 0.352 |
+  | 0.8 (rule's α\*) | 0.332 | 0.518 | 0.190 | 0.332 |
+  | **0.9** | **0.340** | **0.531** | **0.179** | 0.303 |
+  | 1.0 (lr1e-4_e40_bias) | 0.338 | 0.532 | 0.171 | 0.277 |
+
+  - α0.9 beats the plain run on both axes → **best high-VisDrone model that keeps open-vocab
+    ability** (vs WiSE α0.8 on paper_e40: 0.344 / 0.085).
+  - Final pass uses α\*=0.8 (pre-registered VisDrone-only rule) for `wise_lr1e-4_e40_bias`.
+- **02:41** Final pass started (`runs/sweep/final_pass.log`).
 - **01:56 Backup to USB drive** (your request; the 28.7 GB `jetsoninstaller-r39.2.1` stick,
   wiped and formatted FAT32 `THOR_BACKUP` by you, mounted at `/mnt/thor_backup`).
   `scripts/backup_to_drive.sh` (re-runnable, rsync) → `FineTune-YOLOW-UAS_backup/`: git

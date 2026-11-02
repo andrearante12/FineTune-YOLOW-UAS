@@ -1,0 +1,16 @@
+{
+  "tolerance": 0.01,
+  "rows": [
+    {
+      "source": "eval_results/sweep_wise_lr1e-4_e40_bias/sweep_results.json",
+      "alpha": 0.8,
+      "selected_visdrone_mAP": 0.3317514323766569,
+      "selected_ov_mAP": 0.30080033797441225,
+      "selected_ov_mAP_novel": 0.19009861899280117,
+      "finetuned_visdrone_mAP": 0.33809786065998865,
+      "finetuned_ov_mAP": 0.17778921630642117,
+      "finetuned_ov_mAP_novel": 0.17082748346173016,
+      "base_ov_mAP_novel": 0.22177838602013497
+    }
+  ]
+}
