@@ -900,6 +900,10 @@ _(re-runs and benchmark rows added as they finish)_
   - Ranking and gap sizes hold under both protocols (paper model 15–19% of base, WiSE
     45–55%), so the retention claims are protocol-robust.
 - **05:18** Paired bootstrap (step 6, last) started.
+- **05:26 USB re-sync done**: 6.9 GB on the drive (22 GB free) — adds the 8 videos and
+  `checkpoints/`. Note: `checkpoints/*.onnx` (6 files, ~112 MB) are intermediates left by
+  the TensorRT export; each has its **vocabulary baked in** (the 8 OVB prompts, imgsz 1280,
+  from the last export) — use the `.pt` files for anything else.
 - **01:56 Backup to USB drive** (your request; the 28.7 GB `jetsoninstaller-r39.2.1` stick,
   wiped and formatted FAT32 `THOR_BACKUP` by you, mounted at `/mnt/thor_backup`).
   `scripts/backup_to_drive.sh` (re-runnable, rsync) → `FineTune-YOLOW-UAS_backup/`: git
