@@ -1,0 +1,1317 @@
+{
+  "config": {
+    "visdrone_weight": 1.0,
+    "openvocab_weight": 1.0,
+    "conf_threshold": 0.1,
+    "conf_for_mAP": 0.001
+  },
+  "base": {
+    "weights": "yolov8m-worldv2.pt",
+    "visdrone_mAP": 0.13144628363800587,
+    "openvocab_mAP": 0.2632692952384815,
+    "confidence_profile": {
+      "backpack": {
+        "count": 159,
+        "mean_conf": 0.2475
+      },
+      "car": {
+        "count": 5,
+        "mean_conf": 0.3837
+      },
+      "dog": {
+        "count": 130,
+        "mean_conf": 0.445
+      },
+      "foreign object on driveway": {
+        "count": 77,
+        "mean_conf": 0.1782
+      },
+      "foreign object on orange circle landing pad": {
+        "count": 83,
+        "mean_conf": 0.2644
+      },
+      "orange circle landing pad": {
+        "count": 142,
+        "mean_conf": 0.2235
+      },
+      "pedestrian": {
+        "count": 80,
+        "mean_conf": 0.166
+      },
+      "soccer ball": {
+        "count": 171,
+        "mean_conf": 0.3644
+      }
+    },
+    "combined_score": 2.0,
+    "visdrone": {
+      "metrics": {
+        "mAP": 0.13144628363800587,
+        "mAP_50": 0.19769724966447633,
+        "mAP_75": 0.13942112862442338,
+        "mAP_small": 0.06556483990965987,
+        "mAP_medium": 0.1842137636941535,
+        "mAP_large": 0.3589468597814503
+      },
+      "per_class": {
+        "pedestrian": 0.08135904693433835,
+        "people": 0.04366830238688867,
+        "bicycle": 0.063782955333632,
+        "car": 0.4691632407543716,
+        "van": 0.14869692169115384,
+        "truck": 0.15572440074413352,
+        "tricycle": 0.023118657821001205,
+        "awning-tricycle": 0.03610872544285228,
+        "bus": 0.29284058527168705,
+        "motor": 0.0
+      },
+      "fps": 21.525021391772054
+    },
+    "openvocab": {
+      "metrics": {
+        "mAP": 0.2632692952384815,
+        "mAP_50": 0.4400194032016832,
+        "mAP_75": 0.2590056737716222,
+        "mAP_small": 0.03499856632869397,
+        "mAP_medium": 0.08291807146962807,
+        "mAP_large": 0.33877424979027654,
+        "mAP_novel": 0.22177838602013497,
+        "mAP_50_novel": 0.3942734836881702
+      },
+      "per_class": {
+        "backpack": 0.07607416553996534,
+        "car": 0.5,
+        "dog": 0.3595743932230296,
+        "foreign object on driveway": 0.004584233788942524,
+        "foreign object on orange circle landing pad": 0.47699766156895995,
+        "orange circle landing pad": 0.3976959235975221,
+        "pedestrian": 0.2754840457870424,
+        "soccer ball": 0.015743938402390335
+      },
+      "fps": 19.391466514346387
+    }
+  },
+  "runs": {
+    "individual": {
+      "lr": "n/a",
+      "weights_dir": "individual",
+      "checkpoints": [
+        {
+          "label": "wise_last_a0.00",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.00.pt",
+          "visdrone_mAP": 0.13144628363800587,
+          "openvocab_mAP": 0.2632692952384815,
+          "confidence_retention": 1.0,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 159,
+              "count_ratio": 1.0,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2475,
+              "conf_ratio": 1.0,
+              "retention": 1.0
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 130,
+              "count_ratio": 1.0,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.445,
+              "conf_ratio": 1.0,
+              "retention": 1.0
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 77,
+              "count_ratio": 1.0,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1782,
+              "conf_ratio": 1.0,
+              "retention": 1.0
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 83,
+              "count_ratio": 1.0,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.2644,
+              "conf_ratio": 1.0,
+              "retention": 1.0
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 142,
+              "count_ratio": 1.0,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.2235,
+              "conf_ratio": 1.0,
+              "retention": 1.0
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 171,
+              "count_ratio": 1.0,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.3644,
+              "conf_ratio": 1.0,
+              "retention": 1.0
+            }
+          },
+          "combined_score": 2.0,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.13144628363800587,
+              "mAP_50": 0.19769724966447633,
+              "mAP_75": 0.13942112862442338,
+              "mAP_small": 0.06556483990965987,
+              "mAP_medium": 0.1842137636941535,
+              "mAP_large": 0.3589468597814503
+            },
+            "per_class": {
+              "pedestrian": 0.08135904693433835,
+              "people": 0.04366830238688867,
+              "bicycle": 0.063782955333632,
+              "car": 0.4691632407543716,
+              "van": 0.14869692169115384,
+              "truck": 0.15572440074413352,
+              "tricycle": 0.023118657821001205,
+              "awning-tricycle": 0.03610872544285228,
+              "bus": 0.29284058527168705,
+              "motor": 0.0
+            },
+            "fps": 22.17834171597546
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.2632692952384815,
+              "mAP_50": 0.4400194032016832,
+              "mAP_75": 0.2590056737716222,
+              "mAP_small": 0.03499856632869397,
+              "mAP_medium": 0.08291807146962807,
+              "mAP_large": 0.33877424979027654,
+              "mAP_novel": 0.22177838602013497,
+              "mAP_50_novel": 0.3942734836881702
+            },
+            "per_class": {
+              "backpack": 0.07607416553996534,
+              "car": 0.5,
+              "dog": 0.3595743932230296,
+              "foreign object on driveway": 0.004584233788942524,
+              "foreign object on orange circle landing pad": 0.47699766156895995,
+              "orange circle landing pad": 0.3976959235975221,
+              "pedestrian": 0.2754840457870424,
+              "soccer ball": 0.015743938402390335
+            },
+            "fps": 19.339759069647737
+          }
+        },
+        {
+          "label": "wise_last_a0.10",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.10.pt",
+          "visdrone_mAP": 0.1519805508953076,
+          "openvocab_mAP": 0.2680253866076358,
+          "confidence_retention": 0.9677,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 162,
+              "count_ratio": 1.0189,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2491,
+              "conf_ratio": 1.0066,
+              "retention": 1.0
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 131,
+              "count_ratio": 1.0077,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.4472,
+              "conf_ratio": 1.0049,
+              "retention": 1.0
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 76,
+              "count_ratio": 0.987,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1833,
+              "conf_ratio": 1.0286,
+              "retention": 0.987
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 72,
+              "count_ratio": 0.8675,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.249,
+              "conf_ratio": 0.9417,
+              "retention": 0.8169
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 144,
+              "count_ratio": 1.0141,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.2177,
+              "conf_ratio": 0.974,
+              "retention": 0.974
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 169,
+              "count_ratio": 0.9883,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.3586,
+              "conf_ratio": 0.9841,
+              "retention": 0.9726
+            }
+          },
+          "combined_score": 2.1239524640884095,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.1519805508953076,
+              "mAP_50": 0.22868442870085304,
+              "mAP_75": 0.16161057071110385,
+              "mAP_small": 0.07799105889784827,
+              "mAP_medium": 0.21911513685720058,
+              "mAP_large": 0.3954801881760362
+            },
+            "per_class": {
+              "pedestrian": 0.11984123250887295,
+              "people": 0.0548640220042199,
+              "bicycle": 0.07580782595904187,
+              "car": 0.496117422974041,
+              "van": 0.17816612376145724,
+              "truck": 0.18376916789150738,
+              "tricycle": 0.03116472002637501,
+              "awning-tricycle": 0.0435721077624471,
+              "bus": 0.3285820939859058,
+              "motor": 0.007920792079207917
+            },
+            "fps": 22.07109235640273
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.2680253866076358,
+              "mAP_50": 0.44853869231815124,
+              "mAP_75": 0.26373871342621547,
+              "mAP_small": 0.03618649455696075,
+              "mAP_medium": 0.08825560341713798,
+              "mAP_large": 0.3434355840999887,
+              "mAP_novel": 0.22424252670538883,
+              "mAP_50_novel": 0.39884347982322504
+            },
+            "per_class": {
+              "backpack": 0.07815156023026731,
+              "car": 0.5,
+              "dog": 0.38840058588436616,
+              "foreign object on driveway": 0.0027718382732594147,
+              "foreign object on orange circle landing pad": 0.4715520900774408,
+              "orange circle landing pad": 0.38783937139377495,
+              "pedestrian": 0.29874793262875343,
+              "soccer ball": 0.01673971437322414
+            },
+            "fps": 19.34450296120942
+          }
+        },
+        {
+          "label": "wise_last_a0.20",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.20.pt",
+          "visdrone_mAP": 0.17446798228894791,
+          "openvocab_mAP": 0.337153170820885,
+          "confidence_retention": 0.9476,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 167,
+              "count_ratio": 1.0503,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.246,
+              "conf_ratio": 0.9943,
+              "retention": 0.9943
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 130,
+              "count_ratio": 1.0,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.4568,
+              "conf_ratio": 1.0265,
+              "retention": 1.0
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 79,
+              "count_ratio": 1.026,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1893,
+              "conf_ratio": 1.0623,
+              "retention": 1.0
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 66,
+              "count_ratio": 0.7952,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.2562,
+              "conf_ratio": 0.9692,
+              "retention": 0.7707
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 137,
+              "count_ratio": 0.9648,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.2233,
+              "conf_ratio": 0.9993,
+              "retention": 0.9641
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 160,
+              "count_ratio": 0.9357,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.3555,
+              "conf_ratio": 0.9756,
+              "retention": 0.9129
+            }
+          },
+          "combined_score": 2.2748907096203808,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.17446798228894791,
+              "mAP_50": 0.26282821114989036,
+              "mAP_75": 0.18568552048705309,
+              "mAP_small": 0.09398980018516799,
+              "mAP_medium": 0.2575488093611949,
+              "mAP_large": 0.42180002019258267
+            },
+            "per_class": {
+              "pedestrian": 0.1593230862654005,
+              "people": 0.07301725514067336,
+              "bicycle": 0.08799400084799021,
+              "car": 0.5214507096235579,
+              "van": 0.21043467678551653,
+              "truck": 0.21431311575748055,
+              "tricycle": 0.04710461030559431,
+              "awning-tricycle": 0.0539191207760879,
+              "bus": 0.367222257288168,
+              "motor": 0.009900990099009901
+            },
+            "fps": 22.25994749276424
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.337153170820885,
+              "mAP_50": 0.5218070273968816,
+              "mAP_75": 0.3348122028319817,
+              "mAP_small": 0.038819153052166315,
+              "mAP_medium": 0.0913969668765892,
+              "mAP_large": 0.4223122383060888,
+              "mAP_novel": 0.23095130641656453,
+              "mAP_50_novel": 0.40837666086642616
+            },
+            "per_class": {
+              "backpack": 0.08622429904053408,
+              "car": 0.9999999999999998,
+              "dog": 0.4009904276716127,
+              "foreign object on driveway": 0.0022461195478701078,
+              "foreign object on orange circle landing pad": 0.49471729723918423,
+              "orange circle landing pad": 0.38429507104392013,
+              "pedestrian": 0.3115175280676923,
+              "soccer ball": 0.017234623956265887
+            },
+            "fps": 19.516199970678787
+          }
+        },
+        {
+          "label": "wise_last_a0.30",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.30.pt",
+          "visdrone_mAP": 0.19723567858502217,
+          "openvocab_mAP": 0.34076890571214113,
+          "confidence_retention": 0.9416,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 176,
+              "count_ratio": 1.1069,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2412,
+              "conf_ratio": 0.9749,
+              "retention": 0.9749
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 131,
+              "count_ratio": 1.0077,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.4665,
+              "conf_ratio": 1.0482,
+              "retention": 1.0
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 73,
+              "count_ratio": 0.9481,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.216,
+              "conf_ratio": 1.2123,
+              "retention": 0.9481
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 68,
+              "count_ratio": 0.8193,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.276,
+              "conf_ratio": 1.0441,
+              "retention": 0.8193
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 139,
+              "count_ratio": 0.9789,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.2414,
+              "conf_ratio": 1.0801,
+              "retention": 0.9789
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 163,
+              "count_ratio": 0.9532,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.341,
+              "conf_ratio": 0.9357,
+              "retention": 0.8919
+            }
+          },
+          "combined_score": 2.4421422020945704,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.19723567858502217,
+              "mAP_50": 0.29938373250681444,
+              "mAP_75": 0.2098058063834508,
+              "mAP_small": 0.11064695368034434,
+              "mAP_medium": 0.2951262668548791,
+              "mAP_large": 0.4805778509121144
+            },
+            "per_class": {
+              "pedestrian": 0.20189922356983564,
+              "people": 0.10729878515376788,
+              "bicycle": 0.09962932365879365,
+              "car": 0.5436059582409571,
+              "van": 0.24133761300803416,
+              "truck": 0.24347765590658396,
+              "tricycle": 0.06581283041176128,
+              "awning-tricycle": 0.057704261029160854,
+              "bus": 0.39671120504800145,
+              "motor": 0.014879929823325668
+            },
+            "fps": 22.11794239691271
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.34076890571214113,
+              "mAP_50": 0.5285951887398898,
+              "mAP_75": 0.3374323072823893,
+              "mAP_small": 0.03664930785687,
+              "mAP_medium": 0.0915007801484817,
+              "mAP_large": 0.4287865830994035,
+              "mAP_novel": 0.23444690355888384,
+              "mAP_50_novel": 0.41551930015429456
+            },
+            "per_class": {
+              "backpack": 0.0926705468356797,
+              "car": 0.9999999999999998,
+              "dog": 0.4123731346934992,
+              "foreign object on driveway": 0.002792915113379917,
+              "foreign object on orange circle landing pad": 0.4918242601548858,
+              "orange circle landing pad": 0.38969029999785937,
+              "pedestrian": 0.31946982434382615,
+              "soccer ball": 0.017330264557999
+            },
+            "fps": 19.386286455655902
+          }
+        },
+        {
+          "label": "wise_last_a0.40",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.40.pt",
+          "visdrone_mAP": 0.22066090910056027,
+          "openvocab_mAP": 0.34238338799151474,
+          "confidence_retention": 0.8906,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 183,
+              "count_ratio": 1.1509,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2314,
+              "conf_ratio": 0.9351,
+              "retention": 0.9351
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 122,
+              "count_ratio": 0.9385,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.4781,
+              "conf_ratio": 1.0743,
+              "retention": 0.9385
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 72,
+              "count_ratio": 0.9351,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.2137,
+              "conf_ratio": 1.1991,
+              "retention": 0.9351
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 66,
+              "count_ratio": 0.7952,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.2498,
+              "conf_ratio": 0.9447,
+              "retention": 0.7512
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 138,
+              "count_ratio": 0.9718,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.2641,
+              "conf_ratio": 1.1818,
+              "retention": 0.9718
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 153,
+              "count_ratio": 0.8947,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.323,
+              "conf_ratio": 0.8864,
+              "retention": 0.7931
+            }
+          },
+          "combined_score": 2.5693394536750436,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.22066090910056027,
+              "mAP_50": 0.3374354910056386,
+              "mAP_75": 0.2330774035618692,
+              "mAP_small": 0.12856633565112122,
+              "mAP_medium": 0.33092310917995743,
+              "mAP_large": 0.4970391647457392
+            },
+            "per_class": {
+              "pedestrian": 0.24177618408850807,
+              "people": 0.13896419912723593,
+              "bicycle": 0.11135080275154952,
+              "car": 0.5636306133722772,
+              "van": 0.2705710327747573,
+              "truck": 0.2693747936654459,
+              "tricycle": 0.08575936200063551,
+              "awning-tricycle": 0.070761971701509,
+              "bus": 0.4167366677882425,
+              "motor": 0.03768346373544233
+            },
+            "fps": 22.182522175394055
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.34238338799151474,
+              "mAP_50": 0.5317736242653436,
+              "mAP_75": 0.33599298459344495,
+              "mAP_small": 0.03289113847282164,
+              "mAP_medium": 0.10434509152474526,
+              "mAP_large": 0.4319584824383986,
+              "mAP_novel": 0.23437833804147207,
+              "mAP_50_novel": 0.41551774999625174
+            },
+            "per_class": {
+              "backpack": 0.11161246225919495,
+              "car": 0.9999999999999998,
+              "dog": 0.4207018159372364,
+              "foreign object on driveway": 0.0027530926971406893,
+              "foreign object on orange circle landing pad": 0.4726655023358297,
+              "orange circle landing pad": 0.38219278561875364,
+              "pedestrian": 0.3327970756832849,
+              "soccer ball": 0.016344369400677253
+            },
+            "fps": 19.559332670537724
+          }
+        },
+        {
+          "label": "wise_last_a0.50",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.50.pt",
+          "visdrone_mAP": 0.24388041054658627,
+          "openvocab_mAP": 0.3454797364426244,
+          "confidence_retention": 0.8583,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 184,
+              "count_ratio": 1.1572,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2287,
+              "conf_ratio": 0.9241,
+              "retention": 0.9241
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 112,
+              "count_ratio": 0.8615,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.4955,
+              "conf_ratio": 1.1133,
+              "retention": 0.8615
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 67,
+              "count_ratio": 0.8701,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.2129,
+              "conf_ratio": 1.1948,
+              "retention": 0.8701
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 65,
+              "count_ratio": 0.7831,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.2502,
+              "conf_ratio": 0.9464,
+              "retention": 0.7411
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 150,
+              "count_ratio": 1.0563,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.2842,
+              "conf_ratio": 1.2714,
+              "retention": 1.0
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 149,
+              "count_ratio": 0.8713,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.3046,
+              "conf_ratio": 0.836,
+              "retention": 0.7284
+            }
+          },
+          "combined_score": 2.713631710863127,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.24388041054658627,
+              "mAP_50": 0.3772942088270467,
+              "mAP_75": 0.25641753921032184,
+              "mAP_small": 0.14678127602115804,
+              "mAP_medium": 0.3667613429610344,
+              "mAP_large": 0.5500190540702818
+            },
+            "per_class": {
+              "pedestrian": 0.27615095659881084,
+              "people": 0.16373963312454823,
+              "bicycle": 0.1223802731504051,
+              "car": 0.5795356182030312,
+              "van": 0.2958270021453709,
+              "truck": 0.2874112097132755,
+              "tricycle": 0.11373855996585013,
+              "awning-tricycle": 0.083543454313924,
+              "bus": 0.4278294752755893,
+              "motor": 0.08864792297505711
+            },
+            "fps": 22.112825467793314
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.3454797364426244,
+              "mAP_50": 0.543544951662452,
+              "mAP_75": 0.3326011010825451,
+              "mAP_small": 0.033817341474701244,
+              "mAP_medium": 0.10721708591762785,
+              "mAP_large": 0.43888626088591953,
+              "mAP_novel": 0.23740131511646684,
+              "mAP_50_novel": 0.4283108179390878
+            },
+            "per_class": {
+              "backpack": 0.13292190203332904,
+              "car": 0.9999999999999998,
+              "dog": 0.4169110407861767,
+              "foreign object on driveway": 0.002998973359082415,
+              "foreign object on orange circle landing pad": 0.46377080494341716,
+              "orange circle landing pad": 0.3904650810024357,
+              "pedestrian": 0.3394300008421945,
+              "soccer ball": 0.017340088574359813
+            },
+            "fps": 19.42738002895214
+          }
+        },
+        {
+          "label": "wise_last_a0.60",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.60.pt",
+          "visdrone_mAP": 0.26657214219456,
+          "openvocab_mAP": 0.34467005708667253,
+          "confidence_retention": 0.8329,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 176,
+              "count_ratio": 1.1069,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2319,
+              "conf_ratio": 0.9371,
+              "retention": 0.9371
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 103,
+              "count_ratio": 0.7923,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.5132,
+              "conf_ratio": 1.1533,
+              "retention": 0.7923
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 65,
+              "count_ratio": 0.8442,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1961,
+              "conf_ratio": 1.1006,
+              "retention": 0.8442
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 65,
+              "count_ratio": 0.7831,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.2879,
+              "conf_ratio": 1.0889,
+              "retention": 0.7831
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 160,
+              "count_ratio": 1.1268,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.3584,
+              "conf_ratio": 1.6038,
+              "retention": 1.0
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 147,
+              "count_ratio": 0.8596,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.2744,
+              "conf_ratio": 0.753,
+              "retention": 0.6473
+            }
+          },
+          "combined_score": 2.860903241530813,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.26657214219456,
+              "mAP_50": 0.41543639207761734,
+              "mAP_75": 0.2781139493841568,
+              "mAP_small": 0.16521047375549344,
+              "mAP_medium": 0.39762481175530945,
+              "mAP_large": 0.6203739195894171
+            },
+            "per_class": {
+              "pedestrian": 0.3011145063765198,
+              "people": 0.18033719081202376,
+              "bicycle": 0.1346815690280314,
+              "car": 0.5925126546669847,
+              "van": 0.31497175045301073,
+              "truck": 0.3073824053176141,
+              "tricycle": 0.13882295518172466,
+              "awning-tricycle": 0.09470622195926079,
+              "bus": 0.4465877972663835,
+              "motor": 0.1546043708840465
+            },
+            "fps": 22.02861494375736
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.34467005708667253,
+              "mAP_50": 0.5444858646986969,
+              "mAP_75": 0.32699242026512426,
+              "mAP_small": 0.028372566867641995,
+              "mAP_medium": 0.11403643480995247,
+              "mAP_large": 0.44410739124380844,
+              "mAP_novel": 0.2352471303820083,
+              "mAP_50_novel": 0.4260098387053563
+            },
+            "per_class": {
+              "backpack": 0.15520641603744614,
+              "car": 0.9999999999999998,
+              "dog": 0.4216016269341771,
+              "foreign object on driveway": 0.0048421309301280675,
+              "foreign object on orange circle landing pad": 0.40715687382861204,
+              "orange circle landing pad": 0.40906114272696303,
+              "pedestrian": 0.3458776744013311,
+              "soccer ball": 0.013614591834723367
+            },
+            "fps": 19.362829329254183
+          }
+        },
+        {
+          "label": "wise_last_a0.70",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.70.pt",
+          "visdrone_mAP": 0.28493558712130984,
+          "openvocab_mAP": 0.34792941634098773,
+          "confidence_retention": 0.7523,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 166,
+              "count_ratio": 1.044,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2301,
+              "conf_ratio": 0.93,
+              "retention": 0.93
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 98,
+              "count_ratio": 0.7538,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.5142,
+              "conf_ratio": 1.1554,
+              "retention": 0.7538
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 47,
+              "count_ratio": 0.6104,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1861,
+              "conf_ratio": 1.0445,
+              "retention": 0.6104
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 54,
+              "count_ratio": 0.6506,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.3327,
+              "conf_ratio": 1.2583,
+              "retention": 0.6506
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 171,
+              "count_ratio": 1.2042,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.4931,
+              "conf_ratio": 2.2062,
+              "retention": 1.0
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 119,
+              "count_ratio": 0.6959,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.2583,
+              "conf_ratio": 0.7089,
+              "retention": 0.4933
+            }
+          },
+          "combined_score": 2.9199530962707687,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.28493558712130984,
+              "mAP_50": 0.4475192182198885,
+              "mAP_75": 0.2963763215891682,
+              "mAP_small": 0.1826425599394216,
+              "mAP_medium": 0.41877177203008686,
+              "mAP_large": 0.632397210272146
+            },
+            "per_class": {
+              "pedestrian": 0.31734932190766685,
+              "people": 0.1937252269840187,
+              "bicycle": 0.1455942721073923,
+              "car": 0.6024998474171853,
+              "van": 0.33231791691490903,
+              "truck": 0.3198278217704707,
+              "tricycle": 0.16441917691111183,
+              "awning-tricycle": 0.10674576140176456,
+              "bus": 0.45443505191192674,
+              "motor": 0.21244147388665188
+            },
+            "fps": 22.04647345891605
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.34792941634098773,
+              "mAP_50": 0.5488404066479359,
+              "mAP_75": 0.3264856664138362,
+              "mAP_small": 0.032716531280392425,
+              "mAP_medium": 0.12013809122550578,
+              "mAP_large": 0.44881289070032004,
+              "mAP_novel": 0.23735840653779297,
+              "mAP_50_novel": 0.429225345714011
+            },
+            "per_class": {
+              "backpack": 0.17937450099907443,
+              "car": 0.9999999999999998,
+              "dog": 0.4292542170481429,
+              "foreign object on driveway": 0.012351313006982634,
+              "foreign object on orange circle landing pad": 0.33379061456127496,
+              "orange circle landing pad": 0.45497537136769206,
+              "pedestrian": 0.35928489150114423,
+              "soccer ball": 0.014404422243590943
+            },
+            "fps": 19.485482648675717
+          }
+        },
+        {
+          "label": "wise_last_a0.80",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.80.pt",
+          "visdrone_mAP": 0.29854406407905826,
+          "openvocab_mAP": 0.3547283383997231,
+          "confidence_retention": 0.6646,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 137,
+              "count_ratio": 0.8616,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2288,
+              "conf_ratio": 0.9247,
+              "retention": 0.7967
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 92,
+              "count_ratio": 0.7077,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.488,
+              "conf_ratio": 1.0965,
+              "retention": 0.7077
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 39,
+              "count_ratio": 0.5065,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1816,
+              "conf_ratio": 1.0193,
+              "retention": 0.5065
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 43,
+              "count_ratio": 0.5181,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.2805,
+              "conf_ratio": 1.0609,
+              "retention": 0.5181
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 186,
+              "count_ratio": 1.3099,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.6593,
+              "conf_ratio": 2.9501,
+              "retention": 1.0
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 95,
+              "count_ratio": 0.5556,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.2446,
+              "conf_ratio": 0.6713,
+              "retention": 0.3729
+            }
+          },
+          "combined_score": 2.9358565547725686,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.29854406407905826,
+              "mAP_50": 0.4688916758778835,
+              "mAP_75": 0.31086005996981936,
+              "mAP_small": 0.19436094997760603,
+              "mAP_medium": 0.4349314218822462,
+              "mAP_large": 0.6396802463449673
+            },
+            "per_class": {
+              "pedestrian": 0.3276137576454806,
+              "people": 0.2021823632602774,
+              "bicycle": 0.15400669449727963,
+              "car": 0.6090803606567451,
+              "van": 0.3407831900844718,
+              "truck": 0.33057289446211846,
+              "tricycle": 0.1890402764833272,
+              "awning-tricycle": 0.12101957457785306,
+              "bus": 0.4591490978396544,
+              "motor": 0.2519924312833755
+            },
+            "fps": 22.008587747620343
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.3547283383997231,
+              "mAP_50": 0.5627973810311617,
+              "mAP_75": 0.33109698440407226,
+              "mAP_small": 0.03697572246930429,
+              "mAP_medium": 0.1405958714952691,
+              "mAP_large": 0.44664655420932065,
+              "mAP_novel": 0.24484184244830617,
+              "mAP_50_novel": 0.44571918283008316
+            },
+            "per_class": {
+              "backpack": 0.1944686117148255,
+              "car": 0.9999999999999998,
+              "dog": 0.42823104192980055,
+              "foreign object on driveway": 0.03243981908113747,
+              "foreign object on orange circle landing pad": 0.26489019161460703,
+              "orange circle landing pad": 0.5361265517219874,
+              "pedestrian": 0.3687756525079479,
+              "soccer ball": 0.012894838627478911
+            },
+            "fps": 19.381113756377793
+          }
+        },
+        {
+          "label": "wise_last_a0.90",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.90.pt",
+          "visdrone_mAP": 0.30410673237999397,
+          "openvocab_mAP": 0.3437532164432599,
+          "confidence_retention": 0.5424,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 103,
+              "count_ratio": 0.6478,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2281,
+              "conf_ratio": 0.9217,
+              "retention": 0.597
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 81,
+              "count_ratio": 0.6231,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.4513,
+              "conf_ratio": 1.0141,
+              "retention": 0.6231
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 28,
+              "count_ratio": 0.3636,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1938,
+              "conf_ratio": 1.0875,
+              "retention": 0.3636
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 36,
+              "count_ratio": 0.4337,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.1866,
+              "conf_ratio": 0.7057,
+              "retention": 0.3061
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 200,
+              "count_ratio": 1.4085,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.7222,
+              "conf_ratio": 3.2316,
+              "retention": 1.0
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 67,
+              "count_ratio": 0.3918,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.2283,
+              "conf_ratio": 0.6264,
+              "retention": 0.2454
+            }
+          },
+          "combined_score": 2.8559389742865697,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.30410673237999397,
+              "mAP_50": 0.4801462614067514,
+              "mAP_75": 0.3168935378988003,
+              "mAP_small": 0.2003694731636121,
+              "mAP_medium": 0.4404381897365878,
+              "mAP_large": 0.6306270357369479
+            },
+            "per_class": {
+              "pedestrian": 0.3305133652169118,
+              "people": 0.20865405033947468,
+              "bicycle": 0.15787070277525092,
+              "car": 0.6140003980121803,
+              "van": 0.3438931172968884,
+              "truck": 0.33525550719246366,
+              "tricycle": 0.19873242186120835,
+              "awning-tricycle": 0.1265898241618978,
+              "bus": 0.4512672765963603,
+              "motor": 0.2742906603473029
+            },
+            "fps": 22.058127935876843
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.3437532164432599,
+              "mAP_50": 0.5479524350163393,
+              "mAP_75": 0.3154724535178985,
+              "mAP_small": 0.03831412737646007,
+              "mAP_medium": 0.14744696158508602,
+              "mAP_large": 0.4343003102642497,
+              "mAP_novel": 0.23057548266963093,
+              "mAP_50_novel": 0.42661260840796583
+            },
+            "per_class": {
+              "backpack": 0.19500185024639696,
+              "car": 0.9999999999999998,
+              "dog": 0.43362223027218444,
+              "foreign object on driveway": 0.039786361407231796,
+              "foreign object on orange circle landing pad": 0.12913086165248874,
+              "orange circle landing pad": 0.5723849681450338,
+              "pedestrian": 0.36657283552829406,
+              "soccer ball": 0.013526624294449929
+            },
+            "fps": 19.360870332593766
+          }
+        },
+        {
+          "label": "wise_last_a1.00",
+          "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a1.00.pt",
+          "visdrone_mAP": 0.30482942830213977,
+          "openvocab_mAP": 0.3308928888546092,
+          "confidence_retention": 0.4911,
+          "per_class_retention": {
+            "backpack": {
+              "count_base": 159,
+              "count_ckpt": 70,
+              "count_ratio": 0.4403,
+              "mean_conf_base": 0.2475,
+              "mean_conf_ckpt": 0.2322,
+              "conf_ratio": 0.9385,
+              "retention": 0.4132
+            },
+            "dog": {
+              "count_base": 130,
+              "count_ckpt": 78,
+              "count_ratio": 0.6,
+              "mean_conf_base": 0.445,
+              "mean_conf_ckpt": 0.4225,
+              "conf_ratio": 0.9495,
+              "retention": 0.5697
+            },
+            "foreign object on driveway": {
+              "count_base": 77,
+              "count_ckpt": 33,
+              "count_ratio": 0.4286,
+              "mean_conf_base": 0.1782,
+              "mean_conf_ckpt": 0.1753,
+              "conf_ratio": 0.984,
+              "retention": 0.4217
+            },
+            "foreign object on orange circle landing pad": {
+              "count_base": 83,
+              "count_ckpt": 44,
+              "count_ratio": 0.5301,
+              "mean_conf_base": 0.2644,
+              "mean_conf_ckpt": 0.205,
+              "conf_ratio": 0.7752,
+              "retention": 0.411
+            },
+            "orange circle landing pad": {
+              "count_base": 142,
+              "count_ckpt": 213,
+              "count_ratio": 1.5,
+              "mean_conf_base": 0.2235,
+              "mean_conf_ckpt": 0.712,
+              "conf_ratio": 3.1857,
+              "retention": 1.0
+            },
+            "soccer ball": {
+              "count_base": 171,
+              "count_ckpt": 39,
+              "count_ratio": 0.2281,
+              "mean_conf_base": 0.3644,
+              "mean_conf_ckpt": 0.2421,
+              "conf_ratio": 0.6645,
+              "retention": 0.1515
+            }
+          },
+          "combined_score": 2.810188766781749,
+          "visdrone": {
+            "metrics": {
+              "mAP": 0.30482942830213977,
+              "mAP_50": 0.48355251161268115,
+              "mAP_75": 0.31753981818202953,
+              "mAP_small": 0.20479152267295953,
+              "mAP_medium": 0.43856361936230764,
+              "mAP_large": 0.6138659258353557
+            },
+            "per_class": {
+              "pedestrian": 0.33051014620024927,
+              "people": 0.215001649335082,
+              "bicycle": 0.15767007161327995,
+              "car": 0.6166046141670617,
+              "van": 0.33968202877778714,
+              "truck": 0.3317993902870295,
+              "tricycle": 0.20255144171510314,
+              "awning-tricycle": 0.1234542238770462,
+              "bus": 0.4450006229406818,
+              "motor": 0.2860200941080767
+            },
+            "fps": 22.10764413661776
+          },
+          "openvocab": {
+            "metrics": {
+              "mAP": 0.3308928888546092,
+              "mAP_50": 0.5224934163937781,
+              "mAP_75": 0.3011266627386148,
+              "mAP_small": 0.03957157171815037,
+              "mAP_medium": 0.13334290041230948,
+              "mAP_large": 0.41668572973650614,
+              "mAP_novel": 0.21592636413971397,
+              "mAP_50_novel": 0.39568725055079856
+            },
+            "per_class": {
+              "backpack": 0.18862122079406066,
+              "car": 0.9999999999999998,
+              "dog": 0.4284117288848988,
+              "foreign object on driveway": 0.03318899340664959,
+              "foreign object on orange circle landing pad": 0.05557278758758982,
+              "orange circle landing pad": 0.5769878601045147,
+              "pedestrian": 0.35158492599859,
+              "soccer ball": 0.012775594060570258
+            },
+            "fps": 19.518843579631483
+          }
+        }
+      ]
+    }
+  },
+  "optimal": {
+    "checkpoint": "runs/wise_ft/lr1e-4_e10_bias_s2/wise_last_a0.80.pt",
+    "run": "wise_last_a0.80",
+    "combined_score": 2.9358565547725686
+  }
+}
