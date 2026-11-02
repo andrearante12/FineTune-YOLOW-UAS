@@ -697,7 +697,33 @@ _(re-runs and benchmark rows added as they finish)_
     Final checkpoint is worse than unfrozen on both axes.
   - Contrast: lr1e-4_e40_bias (unfrozen, low LR) ends at 0.338 / 0.171. **LR is the lever
     for long runs; freezing is not.**
-- **21:19** Standard benchmarks for the late models started (LVIS/COCO/ODinW).
+- **21:19 → 22:03 Standard benchmarks for the late models** (same protocol and columns as
+  the 04:33 table; appended to `eval_results/standard_ov/results.json`):
+
+  | Model | LVIS AP (% base) | APr | APc | APf | COCO AP (% base) | ODinW-aerial AP, 74 img | ODinW novel | ODinW test, 7 img |
+  |---|---|---|---|---|---|---|---|---|
+  | lr1e-4_e10_bias | 0.080 (49%) | 0.023 | 0.048 | 0.118 | 0.246 (59%) | 0.092 | 0.057 | 0.091 |
+  | lr1e-4_e40_bias | 0.039 (24%) | 0.008 | 0.022 | 0.060 | 0.124 (30%) | **0.103** | 0.047 | 0.106 |
+  | freeze10_e5_bias | 0.067 (41%) | **0.041** | 0.038 | 0.097 | 0.224 (53%) | 0.059 | 0.028 | 0.067 |
+  | freeze22_e5_bias | **0.094 (58%)** | 0.026 | 0.066 | 0.131 | **0.320 (76%)** | 0.051 | 0.034 | 0.078 |
+  | freeze10_e40_bias | 0.005 (3%) | 0.000 | 0.006 | 0.004 | 0.010 (2%) | 0.046 | 0.015 | 0.074 |
+
+  - **Low LR keeps real general ability over long training, but it erodes:** lr1e-4_e40_bias
+    keeps 24% LVIS / 30% COCO (paper_e40: ~1–2%) vs 49% / 59% at 10 epochs — while OVB novel
+    held at 0.17. So "open-vocab preserved" holds for the UAS classes, not for general
+    categories, over 40 epochs.
+  - **Bias fix at low LR helps on the general benchmarks too:** lr1e-4_e10_bias vs stock
+    lr1e-4_e10: LVIS 0.080 vs 0.075, COCO 0.246 vs 0.226.
+  - **WiSE α0.7 vs lr1e-4_e10_bias** (≈ same VisDrone): COCO tied (0.248 vs 0.246), LVIS
+    WiSE ahead (0.088 vs 0.080, APr 0.036 vs 0.023), OVB novel lr1e-4_bias ahead (0.221 vs
+    0.209). The two best recipes trade wins → report both.
+  - Head-only training keeps the most general ability (COCO 76%, LVIS 58%) but only reaches
+    VisDrone 0.227; a frozen backbone protects the LVIS long tail best (APr 0.041) but gains
+    little on aerial ODinW (0.059 vs base 0.049) — updating the backbone is what learns the
+    aerial features that transfer to novel aerial classes.
+  - freeze10_e40_bias collapses on general categories too (LVIS 3%, COCO 2%).
+- **22:03** Second queue finished (paper_e80 skipped). `chain_queue3.sh` fired at 22:03:50
+  (PID-wait works) → `lr1e-4_e10_bias_s1` started.
 - **15:45 Plan change (your call): paper_e80 dropped** (`runs/sweep/SKIP_paper_e80`) —
   paper_e40 already shows the collapse (novel ~0 from epoch 20, LVIS/COCO ~1–2%) and the
   VisDrone plateau (0.341 from epoch 35); an 80-epoch high-LR run can't produce a better
