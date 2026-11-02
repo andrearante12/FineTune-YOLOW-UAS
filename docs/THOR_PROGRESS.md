@@ -678,6 +678,26 @@ _(re-runs and benchmark rows added as they finish)_
     40 epochs → 0.338 / 0.171 (max VisDrone with open-vocab intact).
   - Its LVIS/COCO scores come in the late benchmark step; WiSE-FT on it is in queue 3.
 - **16:39** `freeze10_e40_bias` started.
+- **20:54 freeze10_e40_bias finished** (**4.20 h**, ~30% faster than unfrozen), evaluated
+  21:19 (`eval_results/sweep_freeze10_e40_bias/`), vs bias_e40 (same LR/bias, unfrozen):
+
+  | epoch | bias_e40 VisDrone / novel | freeze10_e40_bias VisDrone / novel |
+  |---|---|---|
+  | 1 | 0.235 / 0.139 | 0.208 / 0.149 |
+  | 2 | 0.240 / 0.173 | 0.225 / 0.225 |
+  | 5 | 0.269 / 0.118 | 0.259 / 0.137 |
+  | 10 | 0.297 / 0.016 | 0.277 / 0.125 |
+  | 15 | 0.320 / 0.004 | 0.296 / 0.013 |
+  | 20 | 0.317 / 0.009 | 0.288 / 0.017 |
+  | 30 | 0.336 / 0.008 | 0.308 / 0.007 |
+  | 40 | 0.345 / 0.023 | **0.320 / 0.001** |
+
+  - **Freezing the backbone only delays the collapse at the paper LR** (novel still 0.125
+    at epoch 10 vs 0.016 unfrozen, but ~0 from epoch 15) and costs ~0.025 VisDrone.
+    Final checkpoint is worse than unfrozen on both axes.
+  - Contrast: lr1e-4_e40_bias (unfrozen, low LR) ends at 0.338 / 0.171. **LR is the lever
+    for long runs; freezing is not.**
+- **21:19** Standard benchmarks for the late models started (LVIS/COCO/ODinW).
 - **15:45 Plan change (your call): paper_e80 dropped** (`runs/sweep/SKIP_paper_e80`) —
   paper_e40 already shows the collapse (novel ~0 from epoch 20, LVIS/COCO ~1–2%) and the
   VisDrone plateau (0.341 from epoch 35); an 80-epoch high-LR run can't produce a better
