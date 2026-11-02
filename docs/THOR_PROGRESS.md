@@ -741,6 +741,18 @@ _(re-runs and benchmark rows added as they finish)_
     higher VisDrone, and 3–4× smaller seed variance, from a single training run. Keeps
     97% of base OVB novel ability at 2.3× base VisDrone mAP.
 - **01:33** WiSE-FT on the 3 lr1e-4_e10_bias seeds started.
+- **01:56 Backup to USB drive** (your request; the 28.7 GB `jetsoninstaller-r39.2.1` stick,
+  wiped and formatted FAT32 `THOR_BACKUP` by you, mounted at `/mnt/thor_backup`).
+  `scripts/backup_to_drive.sh` (re-runnable, rsync) → `FineTune-YOLOW-UAS_backup/`: git
+  bundle of all branches (verified), docs + eval_results + configs + paper PDF, **OVB
+  images (195) + all annotations** (not in git), per-run provenance (args, CSVs, logs),
+  **stripped final weights of all 21 trained runs + 5_epoch.pt** (`run_weights/`, ~55 MB
+  each, with sha256 index), environment record (pip freezes, JetPack/TensorRT versions),
+  README, SHA256SUMS. First pass: 1.4 GB, 570 files, `sha256sum -c` clean.
+  `runs/sweep/backup_after_queue3.sh` re-runs it automatically when the third queue exits
+  (adds `checkpoints/` + `deliverables/videos/`). Not backed up: per-epoch checkpoints
+  (~65 GB), the Docker image (40 GB, rebuildable), TensorRT engines (GPU/version-specific),
+  public datasets.
 - **22:03** Second queue finished (paper_e80 skipped). `chain_queue3.sh` fired at 22:03:50
   (PID-wait works) → `lr1e-4_e10_bias_s1` started.
 - **15:45 Plan change (your call): paper_e80 dropped** (`runs/sweep/SKIP_paper_e80`) —
