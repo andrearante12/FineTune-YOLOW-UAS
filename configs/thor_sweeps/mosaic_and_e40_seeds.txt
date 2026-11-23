@@ -1,0 +1,11 @@
+# Queue 4 (user, 2026-11-22): manuscript follow-ups.
+# 1. Mosaic control: paper_e5 recipe with mosaic on for all 5 epochs (close_mosaic=0).
+#    Stock paper_e5 never uses mosaic (close_mosaic=10 > epochs) while paper_e40 uses it for
+#    epochs 1-30; compare against paper_e5 seeds 0-2 (novel 0.125 +- 0.021).
+--epochs 5 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --close-mosaic 0 --seed 0 --name mosaic_e5
+--epochs 5 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --close-mosaic 0 --seed 1 --name mosaic_e5_s1
+--epochs 5 --optimizer AdamW --lr0 7.14e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --close-mosaic 0 --seed 2 --name mosaic_e5_s2
+
+# 2. Seeds 1-2 of the low-LR 40-epoch frontier point (seed 0 = lr1e-4_e40_bias).
+--epochs 40 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --seed 1 --name lr1e-4_e40_bias_s1
+--epochs 40 --optimizer AdamW --lr0 1e-4 --momentum 0.9 --warmup-bias-lr 0.0 --warmup-epochs 3 --batch 24 --imgsz 1280 --weight-decay 0.05 --restore-head-bias --seed 2 --name lr1e-4_e40_bias_s2

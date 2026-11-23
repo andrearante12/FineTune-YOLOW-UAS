@@ -1,0 +1,1086 @@
+{
+  "definitions": {
+    "held_out_classes": [
+      "backpack",
+      "dog",
+      "soccer ball"
+    ],
+    "generic_vocab": [
+      "orange circle landing pad",
+      "pedestrian",
+      "car",
+      "foreign object on orange circle landing pad",
+      "foreign object on driveway"
+    ],
+    "full_vocab": [
+      "backpack",
+      "car",
+      "dog",
+      "foreign object on driveway",
+      "foreign object on orange circle landing pad",
+      "orange circle landing pad",
+      "pedestrian",
+      "soccer ball"
+    ],
+    "generic_fo_iou50": "held-out box matched (IoU>=0.5) by a foreign-object detection, generic vocab",
+    "generic_fo_tight_or_covering": "as above, or >=50% of the box inside a foreign-object detection no larger than 25% of the image",
+    "any_label_iou50": "held-out box matched (IoU>=0.5) by a detection of any generic label",
+    "specific_prompt_iou50": "held-out box matched by its own class prompt, full vocab (reference)",
+    "obstruction_positive": "image has a 'foreign object on orange circle landing pad' box",
+    "obstruction_negative": "image has an 'orange circle landing pad' box and no foreign-object-on-pad box",
+    "obstruction_score": "max confidence of the 'foreign object on orange circle landing pad' prompt",
+    "obstruction_pipeline": "score = max(FO-on-pad conf, conf of any backpack/soccer ball/dog/FO-on-driveway detection whose centre lies inside a pad or FO-on-pad detection with conf>=0.1); full vocab"
+  },
+  "models": {
+    "base": {
+      "weights": "yolov8m-worldv2.pt",
+      "recall_full": {
+        "conf0.1": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.358,
+              "dog": 0.895,
+              "soccer ball": 0.459
+            },
+            "all": 0.53
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.16,
+              "dog": 0.825,
+              "soccer ball": 0.432
+            },
+            "all": 0.4
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "recall_generic": {
+        "conf0.1": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.054
+            },
+            "all": 0.01
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.84,
+              "dog": 0.0,
+              "soccer ball": 0.081
+            },
+            "all": 0.46
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.009,
+              "dog": 0.07,
+              "soccer ball": 0.054
+            },
+            "all": 0.035
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.396,
+              "dog": 0.0,
+              "soccer ball": 0.027
+            },
+            "all": 0.215
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.035,
+              "soccer ball": 0.0
+            },
+            "all": 0.01
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "fo_detections_per_clear_image_generic": {
+        "conf0.1": 0.49,
+        "conf0.25": 0.19
+      },
+      "obstruction_full": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.835,
+        "auroc_ci95": [
+          0.774,
+          0.893
+        ],
+        "tpr_at_fpr5": 0.154,
+        "tpr_at_fpr10": 0.341,
+        "conf0.1": {
+          "miss_rate": 0.253,
+          "false_alarm_rate": 0.149
+        },
+        "conf0.25": {
+          "miss_rate": 0.725,
+          "false_alarm_rate": 0.099
+        }
+      },
+      "obstruction_generic": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.858,
+        "auroc_ci95": [
+          0.802,
+          0.908
+        ],
+        "tpr_at_fpr5": 0.176,
+        "tpr_at_fpr10": 0.385,
+        "conf0.1": {
+          "miss_rate": 0.209,
+          "false_alarm_rate": 0.158
+        },
+        "conf0.25": {
+          "miss_rate": 0.659,
+          "false_alarm_rate": 0.099
+        }
+      },
+      "obstruction_pipeline_full": {
+        "auroc": 0.866,
+        "ci95": [
+          0.813,
+          0.92
+        ],
+        "miss@0.25": 0.538,
+        "fa@0.25": 0.109
+      }
+    },
+    "ft5_paper": {
+      "weights": "5_epoch.pt",
+      "recall_full": {
+        "conf0.1": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.105,
+              "soccer ball": 0.054
+            },
+            "all": 0.04
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.035,
+              "soccer ball": 0.0
+            },
+            "all": 0.01
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "recall_generic": {
+        "conf0.1": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.054
+            },
+            "all": 0.01
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.462,
+              "dog": 0.0,
+              "soccer ball": 0.081
+            },
+            "all": 0.26
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.047,
+              "dog": 0.158,
+              "soccer ball": 0.054
+            },
+            "all": 0.08
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.292,
+              "dog": 0.0,
+              "soccer ball": 0.027
+            },
+            "all": 0.16
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.028,
+              "dog": 0.105,
+              "soccer ball": 0.0
+            },
+            "all": 0.045
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "fo_detections_per_clear_image_generic": {
+        "conf0.1": 0.31,
+        "conf0.25": 0.06
+      },
+      "obstruction_full": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.668,
+        "auroc_ci95": [
+          0.59,
+          0.746
+        ],
+        "tpr_at_fpr5": 0.297,
+        "tpr_at_fpr10": 0.429,
+        "conf0.1": {
+          "miss_rate": 0.615,
+          "false_alarm_rate": 0.069
+        },
+        "conf0.25": {
+          "miss_rate": 0.813,
+          "false_alarm_rate": 0.02
+        }
+      },
+      "obstruction_generic": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.636,
+        "auroc_ci95": [
+          0.559,
+          0.714
+        ],
+        "tpr_at_fpr5": 0.22,
+        "tpr_at_fpr10": 0.374,
+        "conf0.1": {
+          "miss_rate": 0.637,
+          "false_alarm_rate": 0.099
+        },
+        "conf0.25": {
+          "miss_rate": 0.824,
+          "false_alarm_rate": 0.04
+        }
+      },
+      "obstruction_pipeline_full": {
+        "auroc": 0.696,
+        "ci95": [
+          0.62,
+          0.773
+        ],
+        "miss@0.25": 0.813,
+        "fa@0.25": 0.02
+      }
+    },
+    "paper_e40": {
+      "weights": "runs/sweep/paper_e40/weights/last.pt",
+      "recall_full": {
+        "conf0.1": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "recall_generic": {
+        "conf0.1": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.047,
+              "dog": 0.105,
+              "soccer ball": 0.0
+            },
+            "all": 0.055
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.0
+            },
+            "all": 0.0
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.019,
+              "dog": 0.035,
+              "soccer ball": 0.0
+            },
+            "all": 0.02
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "fo_detections_per_clear_image_generic": {
+        "conf0.1": 0.0,
+        "conf0.25": 0.0
+      },
+      "obstruction_full": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.421,
+        "auroc_ci95": [
+          0.354,
+          0.491
+        ],
+        "tpr_at_fpr5": 0.055,
+        "tpr_at_fpr10": 0.088,
+        "conf0.1": {
+          "miss_rate": 1.0,
+          "false_alarm_rate": 0.0
+        },
+        "conf0.25": {
+          "miss_rate": 1.0,
+          "false_alarm_rate": 0.0
+        }
+      },
+      "obstruction_generic": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.448,
+        "auroc_ci95": [
+          0.383,
+          0.514
+        ],
+        "tpr_at_fpr5": 0.055,
+        "tpr_at_fpr10": 0.088,
+        "conf0.1": {
+          "miss_rate": 1.0,
+          "false_alarm_rate": 0.0
+        },
+        "conf0.25": {
+          "miss_rate": 1.0,
+          "false_alarm_rate": 0.0
+        }
+      },
+      "obstruction_pipeline_full": {
+        "auroc": 0.421,
+        "ci95": [
+          0.354,
+          0.491
+        ],
+        "miss@0.25": 1.0,
+        "fa@0.25": 0.0
+      }
+    },
+    "wise5_a0.7": {
+      "weights": "checkpoints/wise5_a0.7.pt",
+      "recall_full": {
+        "conf0.1": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.019,
+              "dog": 0.596,
+              "soccer ball": 0.459
+            },
+            "all": 0.265
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.439,
+              "soccer ball": 0.081
+            },
+            "all": 0.14
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "recall_generic": {
+        "conf0.1": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.243
+            },
+            "all": 0.045
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.519,
+              "dog": 0.0,
+              "soccer ball": 0.324
+            },
+            "all": 0.335
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.019,
+              "dog": 0.158,
+              "soccer ball": 0.243
+            },
+            "all": 0.1
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.0,
+              "soccer ball": 0.027
+            },
+            "all": 0.005
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.358,
+              "dog": 0.0,
+              "soccer ball": 0.054
+            },
+            "all": 0.2
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.053,
+              "soccer ball": 0.027
+            },
+            "all": 0.02
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "fo_detections_per_clear_image_generic": {
+        "conf0.1": 0.38,
+        "conf0.25": 0.09
+      },
+      "obstruction_full": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.759,
+        "auroc_ci95": [
+          0.687,
+          0.826
+        ],
+        "tpr_at_fpr5": 0.56,
+        "tpr_at_fpr10": 0.615,
+        "conf0.1": {
+          "miss_rate": 0.516,
+          "false_alarm_rate": 0.03
+        },
+        "conf0.25": {
+          "miss_rate": 0.758,
+          "false_alarm_rate": 0.01
+        }
+      },
+      "obstruction_generic": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.778,
+        "auroc_ci95": [
+          0.712,
+          0.839
+        ],
+        "tpr_at_fpr5": 0.396,
+        "tpr_at_fpr10": 0.538,
+        "conf0.1": {
+          "miss_rate": 0.495,
+          "false_alarm_rate": 0.099
+        },
+        "conf0.25": {
+          "miss_rate": 0.681,
+          "false_alarm_rate": 0.02
+        }
+      },
+      "obstruction_pipeline_full": {
+        "auroc": 0.818,
+        "ci95": [
+          0.755,
+          0.874
+        ],
+        "miss@0.25": 0.758,
+        "fa@0.25": 0.01
+      }
+    },
+    "lr1e-4_e10_bias": {
+      "weights": "checkpoints/lr1e-4_e10_bias.pt",
+      "recall_full": {
+        "conf0.1": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.349,
+              "dog": 0.877,
+              "soccer ball": 0.135
+            },
+            "all": 0.46
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.123,
+              "dog": 0.772,
+              "soccer ball": 0.081
+            },
+            "all": 0.3
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "recall_generic": {
+        "conf0.1": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.193,
+              "soccer ball": 0.0
+            },
+            "all": 0.055
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.17,
+              "dog": 0.193,
+              "soccer ball": 0.027
+            },
+            "all": 0.15
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.104,
+              "dog": 0.491,
+              "soccer ball": 0.0
+            },
+            "all": 0.195
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.018,
+              "soccer ball": 0.0
+            },
+            "all": 0.005
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.132,
+              "dog": 0.018,
+              "soccer ball": 0.0
+            },
+            "all": 0.075
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.038,
+              "dog": 0.228,
+              "soccer ball": 0.0
+            },
+            "all": 0.085
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "fo_detections_per_clear_image_generic": {
+        "conf0.1": 0.47,
+        "conf0.25": 0.1
+      },
+      "obstruction_full": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.505,
+        "auroc_ci95": [
+          0.424,
+          0.584
+        ],
+        "tpr_at_fpr5": 0.165,
+        "tpr_at_fpr10": 0.176,
+        "conf0.1": {
+          "miss_rate": 0.791,
+          "false_alarm_rate": 0.218
+        },
+        "conf0.25": {
+          "miss_rate": 0.901,
+          "false_alarm_rate": 0.03
+        }
+      },
+      "obstruction_generic": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.483,
+        "auroc_ci95": [
+          0.401,
+          0.56
+        ],
+        "tpr_at_fpr5": 0.154,
+        "tpr_at_fpr10": 0.165,
+        "conf0.1": {
+          "miss_rate": 0.824,
+          "false_alarm_rate": 0.248
+        },
+        "conf0.25": {
+          "miss_rate": 0.857,
+          "false_alarm_rate": 0.05
+        }
+      },
+      "obstruction_pipeline_full": {
+        "auroc": 0.711,
+        "ci95": [
+          0.636,
+          0.778
+        ],
+        "miss@0.25": 0.769,
+        "fa@0.25": 0.03
+      }
+    },
+    "wise_lr1e-4_e10_bias": {
+      "weights": "checkpoints/wise_lr1e-4_e10_bias.pt",
+      "recall_full": {
+        "conf0.1": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.519,
+              "dog": 0.912,
+              "soccer ball": 0.27
+            },
+            "all": 0.585
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.321,
+              "dog": 0.86,
+              "soccer ball": 0.108
+            },
+            "all": 0.435
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "recall_generic": {
+        "conf0.1": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.123,
+              "soccer ball": 0.0
+            },
+            "all": 0.035
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.566,
+              "dog": 0.123,
+              "soccer ball": 0.027
+            },
+            "all": 0.34
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.066,
+              "dog": 0.368,
+              "soccer ball": 0.0
+            },
+            "all": 0.14
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.018,
+              "soccer ball": 0.0
+            },
+            "all": 0.005
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.406,
+              "dog": 0.018,
+              "soccer ball": 0.0
+            },
+            "all": 0.22
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.028,
+              "dog": 0.158,
+              "soccer ball": 0.0
+            },
+            "all": 0.06
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "fo_detections_per_clear_image_generic": {
+        "conf0.1": 0.31,
+        "conf0.25": 0.1
+      },
+      "obstruction_full": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.682,
+        "auroc_ci95": [
+          0.602,
+          0.756
+        ],
+        "tpr_at_fpr5": 0.319,
+        "tpr_at_fpr10": 0.44,
+        "conf0.1": {
+          "miss_rate": 0.593,
+          "false_alarm_rate": 0.089
+        },
+        "conf0.25": {
+          "miss_rate": 0.78,
+          "false_alarm_rate": 0.03
+        }
+      },
+      "obstruction_generic": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.694,
+        "auroc_ci95": [
+          0.618,
+          0.768
+        ],
+        "tpr_at_fpr5": 0.319,
+        "tpr_at_fpr10": 0.44,
+        "conf0.1": {
+          "miss_rate": 0.538,
+          "false_alarm_rate": 0.149
+        },
+        "conf0.25": {
+          "miss_rate": 0.703,
+          "false_alarm_rate": 0.05
+        }
+      },
+      "obstruction_pipeline_full": {
+        "auroc": 0.861,
+        "ci95": [
+          0.806,
+          0.908
+        ],
+        "miss@0.25": 0.538,
+        "fa@0.25": 0.03
+      }
+    },
+    "lr1e-4_e40_bias": {
+      "weights": "checkpoints/lr1e-4_e40_bias.pt",
+      "recall_full": {
+        "conf0.1": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.009,
+              "dog": 0.684,
+              "soccer ball": 0.189
+            },
+            "all": 0.235
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "specific_prompt_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.456,
+              "soccer ball": 0.054
+            },
+            "all": 0.14
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "recall_generic": {
+        "conf0.1": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.009,
+              "dog": 0.228,
+              "soccer ball": 0.189
+            },
+            "all": 0.105
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.311,
+              "dog": 0.228,
+              "soccer ball": 0.189
+            },
+            "all": 0.265
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.057,
+              "dog": 0.368,
+              "soccer ball": 0.189
+            },
+            "all": 0.17
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        },
+        "conf0.25": {
+          "generic_fo_iou50": {
+            "per_class": {
+              "backpack": 0.0,
+              "dog": 0.053,
+              "soccer ball": 0.027
+            },
+            "all": 0.02
+          },
+          "generic_fo_tight_or_covering": {
+            "per_class": {
+              "backpack": 0.123,
+              "dog": 0.053,
+              "soccer ball": 0.027
+            },
+            "all": 0.085
+          },
+          "any_label_iou50": {
+            "per_class": {
+              "backpack": 0.047,
+              "dog": 0.193,
+              "soccer ball": 0.027
+            },
+            "all": 0.085
+          },
+          "n_boxes": {
+            "backpack": 106,
+            "soccer ball": 37,
+            "dog": 57
+          }
+        }
+      },
+      "fo_detections_per_clear_image_generic": {
+        "conf0.1": 0.47,
+        "conf0.25": 0.14
+      },
+      "obstruction_full": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.572,
+        "auroc_ci95": [
+          0.489,
+          0.657
+        ],
+        "tpr_at_fpr5": 0.11,
+        "tpr_at_fpr10": 0.22,
+        "conf0.1": {
+          "miss_rate": 0.934,
+          "false_alarm_rate": 0.02
+        },
+        "conf0.25": {
+          "miss_rate": 0.989,
+          "false_alarm_rate": 0.0
+        }
+      },
+      "obstruction_generic": {
+        "n_pos": 91,
+        "n_neg": 101,
+        "auroc": 0.563,
+        "auroc_ci95": [
+          0.473,
+          0.643
+        ],
+        "tpr_at_fpr5": 0.231,
+        "tpr_at_fpr10": 0.242,
+        "conf0.1": {
+          "miss_rate": 0.89,
+          "false_alarm_rate": 0.0
+        },
+        "conf0.25": {
+          "miss_rate": 0.978,
+          "false_alarm_rate": 0.0
+        }
+      },
+      "obstruction_pipeline_full": {
+        "auroc": 0.683,
+        "ci95": [
+          0.605,
+          0.761
+        ],
+        "miss@0.25": 0.956,
+        "fa@0.25": 0.02
+      }
+    }
+  }
+}

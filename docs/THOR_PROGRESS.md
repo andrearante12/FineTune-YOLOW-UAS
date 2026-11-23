@@ -1022,3 +1022,19 @@ _(re-runs and benchmark rows added as they finish)_
   paper_e40 → bias_e5 → seeds s1, s2 → WiSE-FT on 3 seeds → LR grid → bias_e40 →
   freeze10_e5, freeze22_e5, freeze10_e40 → **paper_e80 last** (40-epoch curve informs
   whether 80 is still needed; drop it by creating `runs/sweep/SKIP_paper_e80`).
+
+## 2026-11-22/23 follow-ups for the final manuscript
+
+- Queue 4 (`configs/thor_sweeps/mosaic_and_e40_seeds.txt`, new `--close-mosaic` flag in
+  `train_sweep.py`), all finished 08:36, no stalls:
+  - **Mosaic control** (paper 5-ep recipe, mosaic on all epochs, 3 seeds): VisDrone 0.310 ± 0.006,
+    novel 0.110 ± 0.015 vs. stock 0.302 ± 0.004 / 0.125 ± 0.021. Augmentation is not what makes
+    40-epoch runs collapse.
+  - **lr1e-4_e40_bias seeds 1–2**: 3-seed VisDrone 0.337 ± 0.001 (@50 0.530 ± 0.002), novel
+    0.165 ± 0.005.
+- **Prompt / landing-decision analyses** (`scripts/prompt_obstruction_analysis.py`,
+  `eval_results/prompt_analysis/`): generic "foreign object" prompts flag an obstructed pad
+  region but don't localize unprompted objects. Pad-obstruction AUROC with the descriptive prompt
+  alone: base 0.835 > every fine-tuned model (recommended 0.682). Combined with object prompts
+  inside the detected pad (post hoc): recommended 0.861 ≈ base 0.866, with 3% vs. 11% false alarms.
+- Manuscript package: `docs/manuscript/` (overview, all numbers, LaTeX edits, experiment index).

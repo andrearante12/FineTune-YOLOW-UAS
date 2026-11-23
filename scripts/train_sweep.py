@@ -154,6 +154,8 @@ def parse_args():
                    help="Reload pretrained contrastive-head biases that ultralytics' "
                         "weight transfer drops (ablation; off = stock behaviour)")
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--close-mosaic", type=int, default=10,
+                   help="disable mosaic for the last N epochs (ultralytics default 10; 0 = mosaic throughout)")
     p.add_argument("--workers", type=int, default=4,
                    help="Each worker holds a ~3.5 GB mosaic buffer at imgsz 1280")
     p.add_argument("--project", default="runs/sweep")
@@ -227,6 +229,7 @@ def main():
         warmup_bias_lr=args.warmup_bias_lr,
         freeze=args.freeze or None,
         seed=args.seed,
+        close_mosaic=args.close_mosaic,
         workers=args.workers,
         amp=True,
         device=0,
