@@ -103,14 +103,8 @@ The CLIP text encoder is kept frozen throughout fine-tuning: class prompts are e
 by the pretrained encoder and the resulting text embeddings are held fixed, while the image
 backbone, RepVL-PAN neck, and detection head are updated. This preserves the pretrained
 language embedding space shared by all prompts, seen and unseen, while allowing the visual
-components to adapt to aerial imagery. When initializing the fine-tuned model, we also
-restore the three pretrained bias terms of the image-text contrastive head, which the
-Ultralytics weight-transfer routine otherwise resets to a default value because of a tensor
-shape mismatch.
+components to adapt to aerial imagery.
 ```
-
-(The last sentence applies only to the `_bias` runs. If you'd rather leave it out, also drop "head
-biases restored" from the recommended recipe below.)
 
 ### OVB subsection (replace) — Fix 1
 
@@ -363,8 +357,6 @@ Low LR, 40 ep                 & 0.337 $\pm$ 0.001 & 0.165 $\pm$ 0.005 & 0.039 (2
 \label{fig:pareto}
 \end{figure}
 ```
-
-(Head-only and low-LR rows use the restored head biases, as described in Methods.)
 
 ### New subsection: Descriptive Prompts and the Landing Decision (insert next)
 

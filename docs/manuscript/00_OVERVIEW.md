@@ -92,7 +92,7 @@ pad from a clear one, with about 3.6× fewer false alarms.
 - [ ] Fix 3: "CLIP frozen; backbone, neck, head trained" (abstract, methods, conclusion)
 - [ ] Fix 4: delete Expected Outcomes
 - [ ] Update contributions (intro) and abstract to the new story
-- [ ] Methods: evaluation protocol (novel-only OVB, LVIS/COCO/ODinW, bootstrap, seeds), WiSE-FT, head-bias restore
+- [ ] Methods: evaluation protocol (novel-only OVB, LVIS/COCO/ODinW, bootstrap, seeds), WiSE-FT
 - [ ] Results: LR × epoch, freezing, mosaic control, retention methods, per-class OVB, obstruction decision, Thor
 - [ ] Figures: Pareto plot, 4-model qualitative frame (keep the two existing comparison figures)
 - [ ] Discussion + limitations + conclusion rewritten
