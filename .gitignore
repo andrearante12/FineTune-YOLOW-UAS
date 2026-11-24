@@ -157,3 +157,4 @@ eval_results/thor_benchmark_smoke/
 
 # Cached per-image predictions from scripts/prompt_obstruction_analysis.py (38 MB, regenerable)
 eval_results/prompt_analysis/preds/
+eval_results/figures/qualitative/preds/

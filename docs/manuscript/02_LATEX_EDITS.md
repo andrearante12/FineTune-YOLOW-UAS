@@ -153,9 +153,9 @@ configuration, we train for 5 and 40 epochs to
 monitor how open-vocabulary degradation progresses with training duration. We then train
 for 10 epochs at learning rates from $2.5\times10^{-5}$ to $1.5\times10^{-3}$, train for 40
 epochs at $10^{-4}$, and train with the backbone frozen (neck and head trainable) or with
-only the detection head trainable. Because Ultralytics disables mosaic augmentation for the
-final 10 epochs, a 5-epoch run never uses mosaic while a 40-epoch run uses it for 30 epochs;
-we therefore also repeat the 5-epoch run with mosaic enabled throughout as a control.
+only the detection head trainable. Mosaic augmentation is disabled for the final 10 epochs
+of every run; repeating the 5-epoch run with mosaic enabled throughout changed VisDrone and
+novel-category OVB mAP by less than one standard deviation.
 Performance is assessed using a dual-dataset evaluation framework, measuring both VisDrone
 mAP on the VisDrone validation set and OVB mAP on the OVB dataset simultaneously, an approach
 analogous to the dual-task evaluation employed by a fine-tuning
@@ -277,10 +277,7 @@ the higher learning rate (0.341), while retaining a novel OVB mAP of $0.165 \pm 
 seeds), 24 times higher. Layer freezing is less effective: with the backbone frozen, novel mAP
 after 10 epochs is still 0.125 (vs.\ 0.016 unfrozen), but it falls to 0.001 by epoch 40 while
 VisDrone accuracy is 0.025 lower. Training only the detection head preserves the most general
-ability (76\% of base COCO AP) but limits VisDrone mAP to 0.227. Finally, enabling mosaic
-augmentation for all 5 epochs changes novel OVB mAP only from $0.125 \pm 0.021$ to
-$0.110 \pm 0.015$, so the augmentation schedule does not explain the difference between short
-and long training.
+ability (76\% of base COCO AP) but limits VisDrone mAP to 0.227.
 
 \begin{table}[hbt!]
 \caption{Effect of learning rate at a fixed 10-epoch budget (AdamW, single seed).}
