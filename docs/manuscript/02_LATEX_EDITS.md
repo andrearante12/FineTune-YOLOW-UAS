@@ -153,9 +153,7 @@ configuration, we train for 5 and 40 epochs to
 monitor how open-vocabulary degradation progresses with training duration. We then train
 for 10 epochs at learning rates from $2.5\times10^{-5}$ to $1.5\times10^{-3}$, train for 40
 epochs at $10^{-4}$, and train with the backbone frozen (neck and head trainable) or with
-only the detection head trainable. Mosaic augmentation is disabled for the final 10 epochs
-of every run; repeating the 5-epoch run with mosaic enabled throughout changed VisDrone and
-novel-category OVB mAP by less than one standard deviation.
+only the detection head trainable.
 Performance is assessed using a dual-dataset evaluation framework, measuring both VisDrone
 mAP on the VisDrone validation set and OVB mAP on the OVB dataset simultaneously, an approach
 analogous to the dual-task evaluation employed by a fine-tuning
