@@ -147,12 +147,9 @@ $\pm$ standard deviation.
 ```latex
 \subsection{Training Duration, Learning Rate, and Layer Freezing}
 
-All runs share the hyperparameters in Table~\ref{tab:hyperparams} unless stated otherwise. The
-optimizer and learning rate are fixed explicitly for every run: the Ultralytics
-\texttt{auto} optimizer setting selects a different optimizer and learning rate depending on
-the total number of training iterations (AdamW at $7.14\times10^{-4}$ for short runs, SGD at
-$10^{-2}$ for long ones), which would otherwise confound training duration with a roughly
-14$\times$ change in learning rate. Using this configuration, we train for 5 and 40 epochs to
+All runs share the hyperparameters in Table~\ref{tab:hyperparams} unless stated otherwise,
+using the AdamW optimizer with an initial learning rate of $7.14\times10^{-4}$. Using this
+configuration, we train for 5 and 40 epochs to
 monitor how open-vocabulary degradation progresses with training duration. We then train
 for 10 epochs at learning rates from $2.5\times10^{-5}$ to $1.5\times10^{-3}$, train for 40
 epochs at $10^{-4}$, and train with the backbone frozen (neck and head trainable) or with
