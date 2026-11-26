@@ -10,7 +10,8 @@
 \usepackage{longtable,tabularx}
 \setlength\LTleft{0pt} 
 
-\title{Open-Vocabulary Obstruction Detection for UAS Landing via Fine-Tuned YOLO-World}
+% \title{Open-Vocabulary Obstruction Detection for UAS Landing via Fine-Tuned YOLO-World}
+\title{Obstruction Detection for UAS Landing: Fine-Tuning YOLO-World Without Losing the Open Vocabulary}
 
 \author{Andre Arante\footnote{Undergraduate Research Assistant, Department of Electrical and Computer Engineering, Washington DC, and AIAA Student Member.}, Mahyar Ghazanfari\footnote{Ph.D. Student, Department of Mechanical and Aerospace Engineering, George Washington University, AIAA Student Member.}, Can Vu\footnote{Ph.D. Student, Department of Mechanical and Aerospace Engineering, George Washington University, AIAA Student Member.}, and Peng Wei\footnote{Associate Professor, Department of Mechanical and Aerospace Engineering, George Washington University, AIAA Associate Fellow.
 }}
@@ -27,8 +28,27 @@
 
 % Abstract
 \begin{abstract}
-Safe autonomous landing remains a critical challenge for unmanned aerial systems (UAS) performing package delivery, where undetected landing zone obstructions pose significant dangers. Traditional closed-set object detectors cannot generalize to arbitrary obstacles outside their training distribution, making them insufficient for real-world deployment. This paper investigates the tradeoff between domain-specific accuracy and open-vocabulary retention when fine-tuning YOLO-World, a real-time open-vocabulary object detection model, on the VisDrone aerial dataset for UAS landing zone obstruction detection. The CLIP text encoder is frozen during fine-tuning to mitigate open-vocabulary degradation, restricting weight updates to the detection head and neck. Experiments across three training durations (5, 40, and 80 epochs) demonstrate that 
-extended fine-tuning increasingly biases the model toward VisDrone-specific classes at the cost of open-vocabulary responsiveness, while a 5-epoch checkpoint achieves the strongest balance (mAP@0.5: 0.492, +149\% over baseline, while retaining open-vocabulary capabilities). Real-time inference is demonstrated on NVIDIA Jetson Xavier and Jetson Orin Nano embedded platforms, confirming practical feasibility for onboard UAS deployment.
+
+Safe autonomous landing remains a critical challenge for unmanned aerial systems (UAS)
+performing package delivery, where undetected landing zone obstructions pose significant
+dangers. Closed-set object detectors cannot recognize obstacles outside their training
+categories, while open-vocabulary detectors such as YOLO-World can, but must be adapted to
+top-down aerial imagery. This paper characterizes the tradeoff between aerial accuracy and
+open-vocabulary retention when fine-tuning YOLO-World on the VisDrone dataset with its CLIP
+text encoder frozen. We show that standard fine-tuning significantly degrades detection of
+unseen categories within 5 epochs and turns the model into an effectively closed-set
+detector by 40 epochs, and that this loss is heavily influenced by the learning rate rather than the
+training duration or layer freezing. Combining a low learning rate with weight-space
+ensembling (WiSE-FT) yields a model that improves VisDrone mAP@0.5 by 137\% over the
+pretrained model while retaining 77--78\% of its zero-shot accuracy on LVIS and COCO and
+slightly exceeding it on novel UAS obstruction categories. In an exploratory image-level
+landing-pad obstruction test that combines specific hazard prompts with a descriptive prompt,
+this model matches the pretrained model's discrimination (AUROC 0.86) with a 3.7$\times$ lower
+false-alarm rate. TensorRT FP16 inference runs at 56 FPS at 1280$\times$1280 on an NVIDIA
+Jetson AGX Thor with negligible accuracy loss, alongside real-time results on Jetson Xavier
+and Orin Nano.
+
+
 \end{abstract}
 
 \section{Introduction}
@@ -52,11 +72,23 @@ where hazards range from stationary obstacles such as
 vehicles and debris to dynamic ones such as pedestrians 
 and pets \cite{alam2023survey}.
 
-Previous landing systems rely on traditional closed-set object detectors such as YOLOv8 \cite{ultralytics2023} to recognize the marker from drone-mounted cameras \cite{fattahi2017automatic, xu2024small}. While effective for marker localization, these detectors cannot generalize beyond their training categories, making them fundamentally insufficient for safe autonomous landing.
+Previous landing systems locate the landing site from drone-mounted cameras, either by detecting a fiducial marker with classical computer vision~\cite{fattahi2017automatic} or by detecting a landing pad with closed-set deep learning detectors~\cite{xu2024small} such as YOLOv8~\cite{ultralytics2023}. While effective for localizing the landing site, closed-set detectors cannot generalize beyond their training categories, making them fundamentally insufficient for safe autonomous landing.
 
 Open-vocabulary object detection (OVOD) offers a promising alternative. YOLO-World integrates a CLIP-based text encoder into the real-time YOLO framework, enabling detection of arbitrary object categories specified through natural language prompts at inference time \cite{cheng2024yoloworld, radford2021learning}. However, deploying YOLO-World on UAS hardware requires fine-tuning on aerial datasets to close the domain gap between ground-level pretraining data and top-down drone imagery. It has been observed that fine-tuning the CLIP encoder on domain-specific data leads to severe degradation of open-vocabulary generalization, the very capability that motivates its use \cite{cheng2024yoloworld}. Navigating this tradeoff is the central challenge this paper addresses.
 
-This paper makes the following contributions. First, we present a fine-tuning methodology for YOLO-World on the VisDrone dataset that freezes the text encoder during training, preserving open-vocabulary generalization, and evaluates checkpoints at three training durations to empirically characterize the specialization-retention tradeoff. Second, we investigate whether descriptive noun phrase prompts such as ``foreign object on orange circle landing pad'' can detect novel obstructions not explicitly prompted for at inference time. Third, we evaluate the fine-tuned model for real-time inference on NVIDIA Jetson Xavier and Jetson Orin Nano embedded platforms, demonstrating practical feasibility for onboard UAS deployment.
+This paper makes the following contributions. First, we characterize how fine-tuning
+YOLO-World on the VisDrone aerial dataset, with the CLIP text encoder frozen, trades domain
+accuracy for open-vocabulary retention, using controlled experiments over training duration,
+learning rate, and layer freezing, evaluated on a custom UAS Open-Vocabulary Benchmark (OVB)
+and on the standard LVIS, COCO, and ODinW benchmarks. We find that the learning rate, not the
+number of epochs, governs forgetting. Second, we show that a low learning rate combined with
+weight-space ensembling (WiSE-FT) recovers, and on novel UAS categories slightly exceeds, the
+pretrained model's open-vocabulary accuracy at more than twice its VisDrone accuracy. Third, we
+show that descriptive noun-phrase prompts such as ``foreign object on orange circle landing
+pad'' rarely localize unprompted objects but act as a region-level signal that the pad is
+occupied, and that this capability is the most fragile under fine-tuning. Fourth, we benchmark real-time inference on NVIDIA
+Jetson Xavier, Orin Nano, and AGX Thor, including TensorRT deployment.
+
 
 \section{Related Works}
 
@@ -130,7 +162,7 @@ concepts it was never explicitly trained to classify. A recent survey for OVOD i
 for aerial detection, including {CLIP}-activated student-teacher learning~\cite{li2024clipaerial} and pseudo-label-based vocabulary expansion~\cite{li2024castdet}.
 
 Early open-vocab object detectors, such as OVR-CNN, achieved strong generalization but carried significant computation overhead, relying on large transformer-based architectures and online vocabulary processing that made real-time deployment impractical on resource-constrained hardware \cite{zareian2021ovrcnn, cheng2024yoloworld}. YOLO-World addressed this by integrating a CLIP-based text encoder into the real-time YOLO framework and introducing a Re-parameterizable Vision-Language Path Aggregation Network 
-(RepVL-PAN), illustrated in Fig.~\ref{fig:yoloworldarch}.  Its prompt-then-detect paradigm encodes the user vocabulary offline and re-parameterizes it into convolutional weights before inference, eliminating the per-image text encoding cost that bottlenecked earlier open-vocabulary detectors \cite{cheng2024yoloworld}. A further capability relevant to this work is YOLO-World's ability to respond to descriptive noun phrases. Prompts such as "person in red" or "the tallest person", allow users to specify target categories through rich natural language descriptions rather than single-word class labels. This property is particularly valuable for UAS landing obstruction detection, where general descriptive prompts such as "foreign object on orange circle landing pad" may capture hazards that would not be identified by any fixed class label.
+(RepVL-PAN), illustrated in Fig.~\ref{fig:yoloworldarch}.  Its prompt-then-detect paradigm encodes the user vocabulary offline and re-parameterizes it into convolutional weights before inference, eliminating the per-image text encoding cost that bottlenecked earlier open-vocabulary detectors \cite{cheng2024yoloworld}. A further capability relevant to this work is YOLO-World's ability to respond to descriptive noun phrases. Prompts such as ``person in red'' or ``the tallest person'' allow users to specify target categories through rich natural language descriptions rather than single-word class labels. This property is particularly valuable for UAS landing obstruction detection, where general descriptive prompts such as ``foreign object on orange circle landing pad'' may capture hazards that would not be identified by any fixed class label.
 
 \begin{figure}[hbt!]
 \centering
@@ -148,27 +180,36 @@ Early open-vocab object detectors, such as OVR-CNN, achieved strong generalizati
 The vast majority of images used to pre-train models such as YOLO-World and CLIP are captured from ground-level perspectives, creating a domain gap when deployed on UAS systems that capture top-down imagery. Pedestrians appear as small indistinct shapes, vehicles lose their distinguishing features, and spatial relationships change fundamentally, motivating domain-specific fine-tuning on aerial datasets such as VisDrone \cite{zhu2021detection}.
 
 Fine-tuning on domain-specific data, however, risks degrading general capabilities acquired during large-scale pretraining, a phenomenon known as catastrophic forgetting \cite{mccloskey1989catastrophic}. Fine-tuning the CLIP text encoder is shown to lead to a severe drop in zero-shot generalization and it is recommended to use a reduced learning rate on the encoder as a partial mitigation \cite{cheng2024yoloworld}. Alternatively, the YOLO-IOD framework~\cite{zhang2026yoloiodrealtimeincremental} proposes 
-selective kernel fine-tuning and asymmetric knowledge distillation to prevent forgetting when adding new closed-set classes sequentially. However, YOLO-IOD targets closed-set class expansion rather than open-vocabulary retention and requires significant architectural modifications. This work instead prevents encoder degradation by freezing the {CLIP} text encoder 
-weights throughout fine-tuning.
+selective kernel fine-tuning and asymmetric knowledge distillation to prevent forgetting when adding new closed-set classes sequentially. However, YOLO-IOD targets closed-set class expansion rather than open-vocabulary retention and requires significant architectural modifications.
+
+This work keeps the {CLIP} text encoder frozen throughout fine-tuning and, for the visual
+components, adopts weight-space ensembling (WiSE-FT)~\cite{wortsman2022robust}, which
+linearly interpolates between pretrained and fine-tuned weights and was shown to preserve the
+robustness of zero-shot CLIP models under fine-tuning without additional training cost.
+
 
 \section{Methodology}
 
-This section describes the experimental methodology for 
-fine-tuning YOLO-World on the VisDrone aerial dataset 
-while preserving open-vocabulary generalization. The {CLIP} 
-text encoder is fully frozen throughout training, 
-restricting weight updates to the detection head and neck 
-to protect the pretrained visual-semantic alignment 
-responsible for zero-shot detection. Three fine-tuning 
-durations, 5, 40, and 80 epochs, are evaluated using a 
-dual-dataset framework measuring both VisDrone domain 
-accuracy and open-vocabulary retention on a custom 
-Open-Vocabulary Benchmark (OVB), empirically characterizing 
-the specialization-retention tradeoff as training progresses.
+This section describes the experimental methodology for fine-tuning YOLO-World on the
+VisDrone aerial dataset while preserving open-vocabulary generalization. The {CLIP} text
+encoder is frozen throughout training, while the image backbone, neck, and detection head are
+updated. Starting from a standard fine-tuning baseline, we vary the training duration, learning
+rate, and set of trainable layers, and apply weight-space ensembling, measuring both VisDrone
+domain accuracy and open-vocabulary retention on a custom Open-Vocabulary Benchmark (OVB) and
+on standard zero-shot benchmarks to characterize the specialization-retention tradeoff.
 
 \subsection{Base Model}
 
-All experiments are initialized from the pretrained YOLO-World v2 Medium (YOLOv8m-WorldV2) checkpoint, which provides a strong balance between detection accuracy and inference speed suitable for embedded deployment. 
+All experiments are initialized from the pretrained YOLO-World v2 Medium (YOLOv8m-WorldV2) checkpoint, which provides a strong balance between detection accuracy and inference speed suitable for embedded deployment.
+
+YOLO-World consists of four components (Fig.~\ref{fig:yoloworldarch}). The \emph{image
+backbone}, a YOLOv8 CSPDarknet, extracts image features at three scales. The \emph{CLIP text
+encoder} converts each prompt into a text embedding. The \emph{neck}, RepVL-PAN, fuses the
+multi-scale image features with the text embeddings. The \emph{detection head} predicts a
+bounding box for each candidate region and scores it against every prompt with a
+text-contrastive classifier: the similarity between the region and text embeddings, scaled
+and offset by a learnable per-scale bias. We refer to these offsets as the
+\emph{detection-head biases}.
 
 \subsection{Dataset Preparation}
 
@@ -178,114 +219,190 @@ VisDrone annotations are provided in a custom text format that is incompatible w
 
 \subsection{CLIP Encoder Freezing Strategy}
 
-The central design decision of the fine-tuning strategy is freezing the CLIP text encoder's weights and restricting weight updates exclusively to the detection head and neck. This preserves the text-image alignment responsible for zero-shot generalization while allowing the visual detection components to adapt to the aerial imaging characteristics of the VisDrone dataset. 
+The CLIP text encoder is kept frozen throughout fine-tuning: class prompts are encoded once
+by the pretrained encoder and the resulting text embeddings are held fixed, while the image
+backbone, RepVL-PAN neck, and detection head are updated. This preserves the pretrained
+language embedding space shared by all prompts, seen and unseen, while allowing the visual
+components to adapt to aerial imagery. 
+
 
 \subsection{Open-Vocabulary Benchmark (OVB) Evaluation Dataset}
+\label{sec:ovb}
 
-To validate that our fine-tuning approach preserves the model's open-vocabulary capabilities, we construct an Open-Vocabulary Benchmark (OVB) evaluation set. OVB consists of 195 images that were curated using our own UAS and manually annotated with object categories that were deliberately excluded from the fine-tuning process. These categories consisted of basic obstructions (soccer ball, orange circle landing pad, dog) and descriptive noun phrases (foreign object on orange circle landing pad, foreign object on driveway). 
+To measure how well fine-tuning preserves the model's open-vocabulary capabilities, we
+construct an Open-Vocabulary Benchmark (OVB). OVB consists of 195 images from three flights of
+our own UAS over a residential property, one over the driveway and two over the backyard lawn,
+manually annotated with eight categories: basic
+obstructions and landing-site objects (backpack, dog, soccer ball, orange circle landing pad),
+descriptive noun phrases (foreign object on orange circle landing pad, foreign object on
+driveway), and two categories shared with VisDrone (car, pedestrian). The six categories absent
+from VisDrone form the novel subset, whose mAP is our primary open-vocabulary metric; the two
+shared categories improve with fine-tuning and would otherwise mask the loss on unseen ones.
+Each landing pad is labeled with exactly one category: ``orange circle landing pad'' when it is
+clear and ``foreign object on orange circle landing pad'' when an object lies on it, in which
+case the box covers the whole pad. Landing-pad AP therefore measures detection of clear pads,
+and the descriptive pad prompt is evaluated as a region-level obstruction label.
 
-\subsection{Training Durations}
+\subsection{Additional Evaluation on Standard Zero-Shot Benchmarks}
 
-To monitor the progression of open-vocabulary capability 
-degradation during fine-tuning, we train for three distinct 
-durations: 5, 40, and 80 epochs. All three runs use 
-identical hyperparameters, summarized in 
-Table~\ref{tab:hyperparams}, differing only in total 
-training duration. Performance is assessed using a 
-dual-dataset evaluation framework, measuring both VisDrone 
-mAP on the VisDrone validation set and OVB mAP on the OVB 
-dataset simultaneously, an approach analogous to the 
-dual-task evaluation employed by a fine-tuning 
-study~\cite{gandhi2025finetuningforgettingadaptationyolov8} 
-and the base/novel class evaluation protocol established 
-in open-vocabulary detection 
-literature.\cite{zareian2021ovrcnn}
+Because OVB is small and specific to our landing scenario, we also evaluate every model
+zero-shot on three standard benchmarks at 640$\times$640: LVIS v1 minival (4,809 images,
+1,203 categories)~\cite{gupta2019lvis}, the benchmark used to evaluate YOLO-World; COCO
+val2017~\cite{lin2014coco}; and the AerialMaritimeDrone set from ODinW~\cite{li2022glip},
+an aerial dataset whose categories (boat, dock, jet ski, lift) do not appear in VisDrone. We report
+each model relative to the pretrained model under an identical protocol.
 
+OVB results are reported with 95\% bootstrap confidence intervals over images (1,000
+resamples)~\cite{efron1994bootstrap}. Differences between a fine-tuned model and the
+pretrained model are tested with a paired bootstrap, scoring both models on the same image
+resamples. The main recipes are repeated with three random seeds and reported as mean
+$\pm$ standard deviation.
+
+
+
+\subsection{Standard Fine-Tuning Baseline}
+
+Throughout this paper, \emph{standard fine-tuning} denotes fine-tuning with the configuration in
+Table~\ref{tab:hyperparams}, with no measure taken to retain open-vocabulary ability beyond
+freezing the text encoder. Every other configuration is defined in Section~\ref{sec:configs} by how it
+differs from this baseline.
 
 \begin{table}[hbt!]
-\caption{Fine-tuning hyperparameters. All three training runs
-       (5, 40, and 80 epochs) use identical settings, differing
-       only in total training duration.}
+\caption{Standard fine-tuning configuration.}
 \label{tab:hyperparams}
 \centering
 \begin{tabular}{ll}
 \hline
 \textbf{Parameter} & \textbf{Value} \\
 \hline
-Base model          & YOLOv8m-WorldV2 \\
-Optimizer           & AdamW (auto) \\
-Learning rate (lr0) & $2 \times 10^{-4}$ \\
-LR decay (lrf)      & 0.01 \\
-Weight decay        & 0.05 \\
-Batch size          & 24 \\
-Image size          & $1280 \times 1280$ \\
-Warmup epochs       & 3 \\
+Base model                       & YOLOv8m-WorldV2 \\
+Optimizer                        & AdamW ($\beta_1 = 0.9$) \\
+Learning rate (lr0)              & $7.14 \times 10^{-4}$ \\
+Final LR factor (lrf), schedule  & 0.01, linear decay \\
+Weight decay                     & 0.05 \\
+Batch size                       & 24 \\
+Image size                       & $1280 \times 1280$ \\
+Warmup epochs                    & 3 \\
+Mosaic augmentation              & disabled for final 10 epochs \\
+Mixed precision                  & FP16 (AMP) \\
+Trainable components             & backbone, neck, detection head \\
+CLIP text encoder                & frozen \\
+Detection-head biases            & reinitialized by the trainer \\
+Retention method                 & none \\
 \hline
 \end{tabular}
 \end{table}
+
+\subsection{Experimental Configurations}
+\label{sec:configs}
+
+Table~\ref{tab:configs} lists every configuration evaluated in this paper by how it differs
+from standard fine-tuning; settings not listed are those of Table~\ref{tab:hyperparams}. Each
+configuration addresses one question:
+\begin{itemize}
+    \item \textbf{Standard fine-tuning} (5 and 40 epochs): how open-vocabulary degradation
+          progresses with training duration.
+    \item \textbf{Learning-rate sweep} (10 epochs): the effect of the learning rate alone, from
+          $2.5\times10^{-5}$ to $1.5\times10^{-3}$.
+    \item \textbf{Low LR} ($10^{-4}$, 10 and 40 epochs): whether a small learning rate prevents
+          degradation over both short and long training.
+    \item \textbf{Backbone frozen} and \textbf{head only}: whether restricting which components
+          are updated protects open-vocabulary ability.
+    \item \textbf{Weight-space ensembling} (Section~\ref{sec:wise}): applied after training to
+          standard fine-tuning (5 epochs) and to the low-learning-rate run (10 epochs); the
+          latter is our \textbf{recommended} configuration.
+\end{itemize}
+The low-learning-rate, layer-freezing, and recommended runs also restore the pretrained
+detection-head biases at initialization.
+
+\begin{table}[hbt!]
+\caption{Experimental configurations, defined by their differences from standard fine-tuning
+         (Table~\ref{tab:hyperparams}). LR = initial learning rate. Head biases: restored to
+         their pretrained values or left as reinitialized by the trainer. Where two epoch counts
+         are given, seeds are listed in the same order.}
+\label{tab:configs}
+\centering
+\begin{tabular}{lllllc}
+\hline
+\textbf{Configuration} & \textbf{LR} & \textbf{Epochs} & \textbf{Trainable} & \textbf{Head biases} & \textbf{Seeds} \\
+\hline
+Standard fine-tuning        & $7.14\times10^{-4}$ & 5, 40 & all & reinitialized & 3, 1 \\
+Learning-rate sweep         & $2.5\times10^{-5}$ to $1.5\times10^{-3}$ & 10 & all & reinitialized & 1 \\
+Low LR                      & $10^{-4}$ & 10, 40 & all & restored & 3, 3 \\
+Backbone frozen             & $7.14\times10^{-4}$ & 5, 40 & neck, head & restored & 1 \\
+Head only                   & $7.14\times10^{-4}$ & 5 & head & restored & 1 \\
+Standard + WiSE-FT          & \multicolumn{5}{l}{standard fine-tuning (5 epochs), interpolated at $\alpha = 0.7$; 3 seeds} \\
+Recommended                 & \multicolumn{5}{l}{low LR (10 epochs), interpolated at $\alpha = 0.8$; 3 seeds} \\
+\hline
+\end{tabular}
+\end{table}
+
+Performance is assessed using a dual-dataset evaluation framework, measuring both VisDrone
+mAP on the VisDrone validation set and OVB mAP on the OVB dataset simultaneously, an approach
+analogous to the dual-task evaluation employed by a fine-tuning
+study~\cite{gandhi2025finetuningforgettingadaptationyolov8} and the base/novel class
+evaluation protocol established in open-vocabulary detection
+literature~\cite{zareian2021ovrcnn}.
+
+
+\subsection{Weight-Space Ensembling (WiSE-FT)}
+\label{sec:wise}
+
+As a post-hoc retention method, we interpolate between the pretrained weights
+$\theta_{\text{base}}$ and the fine-tuned weights $\theta_{\text{ft}}$,
+\begin{equation}
+\theta(\alpha) = (1-\alpha)\,\theta_{\text{base}} + \alpha\,\theta_{\text{ft}},
+\end{equation}
+following WiSE-FT~\cite{wortsman2022robust}. The interpolated model has the same architecture
+and inference cost as either endpoint. To keep OVB a held-out test set, $\alpha$ is selected on
+VisDrone alone: we choose the smallest $\alpha$ whose VisDrone mAP is within 0.01 of the fully
+fine-tuned model ($\alpha = 1$). 
+
 
 \section{Results}
 
 \subsection{Quantitative Results}
-
-Table~\ref{tab:results} summarizes performance across all checkpoints. VisDrone mAP and OVB mAP average IoU thresholds from 0.5 to 0.95 on the VisDrone validation set and OVB set, respectively.
-
 \begin{table}[hbt!]
-\caption{Performance comparison across fine-tuning checkpoints on 
-         VisDrone validation and Open-Vocabulary Benchmark sets.}
+\caption{Performance across fine-tuning durations on the VisDrone validation set and the
+         Open-Vocabulary Benchmark (OVB). All mAP values are COCO mAP@[.5:.95] unless noted.
+         OVB novel excludes the two OVB classes that also appear in VisDrone (car,
+         pedestrian). Both fine-tuned models use the hyperparameters in
+         Table~\ref{tab:hyperparams}.}
 \label{tab:results}
 \centering
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \hline
-\textbf{Model} & \textbf{VisDrone mAP} & \textbf{VisDrone mAP@50} 
-& \textbf{OVB mAP} \\
+\textbf{Model} & \textbf{VisDrone mAP} & \textbf{VisDrone mAP@50}
+& \textbf{OVB mAP} & \textbf{OVB novel mAP} \\
 \hline
-Base (YOLOv8m-WorldV2) & 0.131 & 0.198 & 0.034 \\
-Fine-tuned (5 epoch)   & 0.308 & 0.492 & 0.034 \\
-Fine-tuned (40 epoch)  & 0.298 & 0.476 & 0.017 \\
-Fine-tuned (80 epoch)  & 0.330 & 0.525 & 0.001 \\
+Base (YOLOv8m-WorldV2) & 0.131 & 0.198 & 0.263 & 0.222 \\
+Standard fine-tuning, 5 ep  & 0.308 & 0.492 & 0.196 & 0.129 \\
+Standard fine-tuning, 40 ep & 0.341 & 0.538 & 0.037 & 0.007 \\
 \hline
 \end{tabular}
 \end{table}
 
-Fine-tuning on the VisDrone dataset produces substantial 
-gains in domain-specific detection accuracy across all 
-checkpoints. The 5-epoch checkpoint achieves a VisDrone 
-mAP of 0.308, representing a +135\% improvement over the 
-base model, and a mAP@50 of 0.492, a +149\% improvement. 
-The slight mAP decrease from 5 to 40 epochs (0.308 
-vs.\ 0.298) is attributable to training variance, as the 
-80-epoch checkpoint recovers to 0.330, confirming that 
-VisDrone accuracy does not monotonically decline with 
-training duration. Per-class results in 
-Table~\ref{tab:perclass} show consistent improvement 
-across all 10 VisDrone categories, with the most 
-notable gain on the motor class, which improves from 
-0.000 in the base model to 0.303 after fine-tuning, 
-indicating that zero-shot detection of certain aerial 
-categories fails entirely without domain adaptation.
+Standard fine-tuning for 5 epochs raises VisDrone mAP from 0.131 to 0.308 (+134\%), and 40
+epochs raise it to 0.341 (Table~\ref{tab:results}). Every VisDrone class improves
+(Table~\ref{tab:perclass}); motor rises from 0.000 to 0.303, so some aerial categories are
+undetectable without domain adaptation.
 
-The OVB mAP results reveal a clear and consistent 
-pattern of open-vocabulary capability loss with extended 
-fine-tuning. The 5-epoch checkpoint retains an OVB mAP 
-of 0.034, identical to the base model baseline, 
-indicating that 5 epochs of frozen-encoder fine-tuning 
-produces no measurable degradation in open-vocabulary 
-detection accuracy. In contrast, the 40-epoch checkpoint 
-degrades to an OVB mAP of 0.017, a 49\% reduction 
-relative to baseline, and the 80-epoch checkpoint 
-collapses to near zero at 0.001.
+Open-vocabulary ability is lost early. After 5 epochs, novel OVB mAP falls by 42\%, from 0.222
+to 0.129 (three seeds: $0.125 \pm 0.021$); a paired bootstrap on a re-evaluation of the same
+models puts the 95\% confidence interval of the drop at $[-0.124, -0.070]$. The standard
+benchmarks show a larger loss: 19\% of base LVIS AP and 18\% of base COCO AP remain. After 40
+epochs, novel OVB mAP is 0.007 and LVIS AP 1\% of base, leaving a closed-set VisDrone detector.
 
 
 \begin{table}[hbt!]
 \caption{Per-class AP on VisDrone validation set 
-         (COCO mAP@[.5:.95]).}
+         (COCO mAP@[.5:.95]). Standard: standard fine-tuning, 5 epochs.}
 \label{tab:perclass}
 \centering
 \begin{tabular}{lcc|lcc}
 \hline
-\textbf{Class} & \textbf{Base} & \textbf{5-epoch} & 
-\textbf{Class} & \textbf{Base} & \textbf{5-epoch} \\
+\textbf{Class} & \textbf{Base} & \textbf{Standard} & 
+\textbf{Class} & \textbf{Base} & \textbf{Standard} \\
 \hline
 pedestrian      & 0.081 & 0.325 & truck           & 0.156 & 0.338 \\
 people          & 0.044 & 0.215 & tricycle        & 0.023 & 0.230 \\
@@ -296,92 +413,271 @@ van             & 0.149 & 0.317 & motor           & 0.000 & 0.303 \\
 \end{tabular}
 \end{table}
 
-\subsection{Embedded Deployment}
+\subsection{Learning Rate, Training Duration, and Layer Freezing}
 
-The 5-epoch fine-tuned checkpoint was evaluated for real-time inference on two embedded platforms: the Jetson Xavier and the Jetson Orin Nano. Embedded inference on {NVIDIA} Jetson platforms has been 
-demonstrated across a range of real-time computer vision 
-tasks, with the Jetson ecosystem providing a practical 
-deployment target for {UAS} onboard 
-computing \cite{mittal2019survey}. Inference was performed at 1280$\times$1280 resolution using the PyTorch runtime. Table~\ref{tab:jetson} summarizes the measured inference speeds across both platforms.
+At a fixed 10-epoch budget (Table~\ref{tab:lrgrid}), raising the learning rate from $10^{-4}$
+to the standard $7.14\times10^{-4}$ trades open-vocabulary retention for VisDrone accuracy; at
+$1.5\times10^{-3}$, open-vocabulary detection collapses with no further VisDrone gain.
+Retention tracks the current learning rate, not the epoch count: in the standard 5-epoch run,
+novel mAP drops in one step as warmup reaches the peak rate (0.229 after epoch 1, 0.132 after
+epoch 2), then stays flat while VisDrone accuracy keeps rising.
+
+A low learning rate prevents the long-training collapse rather than delaying it: 40 epochs at
+$10^{-4}$ match standard 40-epoch VisDrone accuracy ($0.337 \pm 0.001$ vs.\ 0.341) while keeping
+novel OVB mAP at $0.165 \pm 0.005$ instead of 0.007. Restoring the head biases explains only
+part of this; with the biases restored, 40 epochs at $7.14\times10^{-4}$ retain 0.023, so the
+learning rate itself accounts for a sevenfold difference. Layer freezing only delays the
+collapse: with the backbone frozen (biases restored), novel mAP is 0.125 at epoch 10 (vs.\
+0.016 unfrozen) but 0.001 at epoch 40, with VisDrone mAP 0.025 lower. Head-only training
+retains the most general ability (76\% of base COCO AP) but limits VisDrone mAP to 0.227.
 
 \begin{table}[hbt!]
-\caption{Real-time inference performance of the 5-epoch 
-         fine-tuned checkpoint on embedded Jetson platforms 
-         at 1280$\times$1280 resolution.}
-\label{tab:jetson}
+\caption{Effect of learning rate at a fixed 10-epoch budget (AdamW, single seed). All
+         other settings follow standard fine-tuning, including the reinitialized head biases.}
+\label{tab:lrgrid}
 \centering
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \hline
-\textbf{Platform} & \textbf{FPS}  \\
+\textbf{Learning rate} & \textbf{VisDrone mAP} & \textbf{VisDrone mAP@50} & \textbf{OVB novel mAP} & \textbf{OVB novel mAP@50} \\
 \hline
-NVIDIA Jetson Xavier      & 9.4 \\
-NVIDIA Jetson Orin Nano & 12.5  \\
+$2.5\times10^{-5}$ & 0.271 & 0.431 & 0.181 & 0.374 \\
+$1\times10^{-4}$   & 0.304 & 0.484 & 0.202 & 0.371 \\
+$2\times10^{-4}$   & 0.319 & 0.504 & 0.172 & 0.288 \\
+$7.14\times10^{-4}$ & 0.327 & 0.519 & 0.131 & 0.201 \\
+$1.5\times10^{-3}$ & 0.323 & 0.510 & 0.000 & 0.000 \\
 \hline
 \end{tabular}
 \end{table}
 
-Both platforms sustain real-time inference speeds suitable for onboard UAS deployment, confirming that the fine-tuned 
-open-vocabulary detection system is practical for resource-constrained aerial hardware, and suggest that performance can be further improved via more powerful embedded systems such as NVIDIA Jetson Thor.
+\subsection{Retention Methods}
+
+Weight-space ensembling recovers most of the loss at no training cost
+(Table~\ref{tab:methods}). Interpolating the standard 5-epoch model at $\alpha = 0.7$
+(selected on VisDrone only, the same for all seeds) costs 0.004 VisDrone mAP and raises novel
+OVB mAP from 0.125 to 0.209, and LVIS and COCO retention from 18--19\% to 55--59\%. The two
+methods stack: the 10-epoch, $10^{-4}$ model interpolated at $\alpha = 0.8$, our recommended
+configuration, reaches a novel OVB mAP of $0.253 \pm 0.013$, slightly above the base model
+(paired bootstrap 95\% CI of the difference $[+0.004, +0.046]$), keeps 77--78\% of base LVIS
+and COCO AP, and more than doubles VisDrone mAP (0.298). Of all fine-tuned models, it stays
+closest to the base model's open-vocabulary accuracy on both OVB and LVIS
+(Fig.~\ref{fig:tradeoff}).
+
+On the AerialMaritimeDrone categories absent from VisDrone, moderate fine-tuning improves
+zero-shot detection (novel AP 0.057--0.064 vs.\ 0.034 for the base model), while head-only
+training leaves it unchanged and standard 40-epoch fine-tuning loses the gain (0.014).
+VisDrone fine-tuning thus appears to learn aerial features that transfer to unseen aerial
+objects, although with 74 images this result is only directional.
+
+\begin{table}[hbt!]
+\caption{Retention methods. VisDrone and OVB novel mAP@[.5:.95]; $\pm$ is the standard
+         deviation over three seeds. LVIS and COCO are zero-shot AP, with percent of the base
+         model in parentheses (single seed). ODinW is novel-category AP on AerialMaritimeDrone.}
+\label{tab:methods}
+\centering
+\begin{tabular}{lccccc}
+\hline
+\textbf{Method} & \textbf{VisDrone} & \textbf{OVB novel} & \textbf{LVIS} & \textbf{COCO} & \textbf{ODinW} \\
+\hline
+Base (no fine-tuning)         & 0.131 & 0.222 & 0.162 (100\%) & 0.419 (100\%) & 0.034 \\
+Standard fine-tuning, 5 ep    & 0.302 $\pm$ 0.004 & 0.125 $\pm$ 0.021 & 0.031 (19\%) & 0.074 (18\%) & 0.061 \\
+Standard fine-tuning, 40 ep   & 0.341 & 0.007 & 0.001 (1\%) & 0.007 (2\%) & 0.014 \\
+Head only, 5 ep               & 0.227 & 0.209 & 0.094 (58\%) & 0.320 (76\%) & 0.034 \\
+Low LR, 10 ep                 & 0.304 $\pm$ 0.001 & 0.215 $\pm$ 0.007 & 0.080 (49\%) & 0.246 (59\%) & 0.057 \\
+Low LR, 40 ep                 & 0.337 $\pm$ 0.001 & 0.165 $\pm$ 0.005 & 0.039 (24\%) & 0.124 (30\%) & 0.047 \\
+Standard 5 ep + WiSE-FT ($\alpha$=0.7) & 0.299 $\pm$ 0.002 & 0.209 $\pm$ 0.031 & 0.088 (55\%) & 0.248 (59\%) & 0.064 \\
+\textbf{Low LR 10 ep + WiSE-FT ($\alpha$=0.8)} & \textbf{0.298 $\pm$ 0.000} & \textbf{0.253 $\pm$ 0.013} & \textbf{0.125 (77\%)} & \textbf{0.325 (78\%)} & 0.060 \\
+\hline
+\end{tabular}
+\end{table}
 
 \begin{figure}[hbt!]
 \centering
-\begin{subfigure}{0.45\textwidth}
-    \centering
-    \includegraphics[height=4cm, keepaspectratio]{baseline_4.png}
-    \caption{Base YOLOv8m-WorldV2 model.}
-    \label{fig:pedestrian_base}
-\end{subfigure}
-\hfill
-\begin{subfigure}{0.45\textwidth}
-    \centering
-    \includegraphics[height=4cm, keepaspectratio]{finetuned_4.png}
-    \caption{Fine-tuned (5 epoch).}
-    \label{fig:pedestrian_ft}
-\end{subfigure}
-\caption{Base model (left) vs.\ 5-epoch fine-tuned model (right) 
-         on top-down pedestrian detection.}
-\label{fig:pedestrian_comparison}
+\includegraphics[width=\textwidth]{retention_tradeoff.png}
+\caption{VisDrone mAP versus open-vocabulary retention for every final model, on (a) the novel
+         categories of our UAS benchmark and (b) zero-shot LVIS. Points are means over three
+         seeds where available (standard deviations in Table~\ref{tab:methods}); LVIS scores are
+         single-seed. In (a), thin lines trace weight-space interpolation from the pretrained
+         model ($\alpha = 0$) to the fine-tuned model ($\alpha = 1$) in steps of 0.1, averaged
+         over three seeds, for standard fine-tuning (orange) and the low-learning-rate run
+         (blue). Low-learning-rate and head-only runs restore the pretrained detection-head
+         biases at initialization; standard fine-tuning runs do not.}
+\label{fig:tradeoff}
+\end{figure}
+
+\subsection{Descriptive Prompts and the Landing Decision}
+
+Per category (Table~\ref{tab:perclassovb}), concrete object prompts recover under the
+recommended recipe (backpack 0.076 to 0.174, landing pad 0.398 to 0.577), but ``foreign object
+on orange circle landing pad'' falls from 0.477 to 0.261. ``Foreign object on driveway'' is near
+zero for every model; its 20 ground-truth boxes are one pair of shoes from a single flight, so
+it says little about scene-level prompts in general.
+
+To test whether descriptive prompts catch unprompted objects, we removed the backpack, dog, and
+soccer ball prompts and checked which of those 200 objects a ``foreign object'' detection
+(confidence $\geq$ 0.1) found. These detections rarely localize the object (at most 11\% at IoU
+$\geq$ 0.5) but flag the obstructed pad: a base-model ``foreign object on orange circle landing
+pad'' detection covers 84\% of backpacks, which lie on the pad, while dogs and soccer balls
+elsewhere are missed. Descriptive prompts therefore give a region-level obstruction signal, and
+specific prompts are still needed for localization; with them, the recommended model has the
+highest recall (59\% vs.\ 53\% for the base model).
+
+For the binary landing decision, we classify the 91 OVB images with an obstructed pad against
+the 101 with a clear pad (Table~\ref{tab:obstruction}). With the descriptive prompt alone, the
+base model is best (AUROC 0.835). When object prompts detected inside the pad are also
+counted, the recommended model matches the base model (0.861 vs.\ 0.866) at the same miss rate
+with 3\% instead of 11\% false alarms, while standard fine-tuning reaches 0.696. This combined
+score was defined after seeing the descriptive-only results and is exploratory.
+
+\begin{table}[hbt!]
+\caption{Per-category OVB AP@[.5:.95]. FO = foreign object. Car (one ground-truth box) is omitted.}
+\label{tab:perclassovb}
+\centering
+\begin{tabular}{lccccccc}
+\hline
+\textbf{Model} & \textbf{backpack} & \textbf{dog} & \textbf{ball} & \textbf{pad} & \textbf{FO on pad} & \textbf{FO on driveway} & \textbf{pedestrian} \\
+\hline
+Base             & 0.076 & 0.360 & 0.016 & 0.398 & 0.477 & 0.005 & 0.275 \\
+Standard fine-tuning, 5 ep  & 0.014 & 0.011 & 0.013 & 0.424 & 0.310 & 0.001 & 0.347 \\
+Standard fine-tuning, 40 ep & 0.000 & 0.000 & 0.000 & 0.042 & 0.000 & 0.000 & 0.216 \\
+Standard 5 ep + WiSE-FT     & 0.050 & 0.178 & 0.025 & 0.547 & 0.451 & 0.001 & 0.379 \\
+Recommended      & 0.174 & 0.423 & 0.017 & 0.577 & 0.261 & 0.026 & 0.377 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[hbt!]
+\caption{Image-level landing-pad obstruction detection on OVB (91 obstructed, 101 clear).
+         AUROC with 95\% bootstrap CI. Descriptive: maximum confidence of the ``foreign object
+         on orange circle landing pad'' prompt. Combined: additionally counts object prompts
+         detected inside the landing pad. Miss and false-alarm rates for the combined score at
+         confidence 0.25.}
+\label{tab:obstruction}
+\centering
+\begin{tabular}{lcccc}
+\hline
+\textbf{Model} & \textbf{AUROC (descriptive)} & \textbf{AUROC (combined)} & \textbf{Miss} & \textbf{False alarm} \\
+\hline
+Base             & 0.835 [0.774, 0.893] & 0.866 [0.813, 0.920] & 0.54 & 0.11 \\
+Standard fine-tuning, 5 ep  & 0.668 [0.590, 0.746] & 0.696 [0.620, 0.773] & 0.81 & 0.02 \\
+Standard fine-tuning, 40 ep & 0.421 [0.354, 0.491] & 0.421 [0.354, 0.491] & 1.00 & 0.00 \\
+Standard 5 ep + WiSE-FT     & 0.759 [0.687, 0.826] & 0.818 [0.755, 0.874] & 0.76 & 0.01 \\
+Recommended      & 0.682 [0.602, 0.756] & 0.861 [0.806, 0.908] & 0.54 & 0.03 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Embedded Deployment}
+
+NVIDIA Jetson modules are a common target for onboard UAS vision~\cite{mittal2019survey}.
+With PyTorch at 1280$\times$1280, the standard 5-epoch model runs at 9.4 FPS on a Jetson Xavier
+and 12.5 FPS on a Jetson Orin Nano. On a Jetson AGX Thor (120~W mode), we measured end-to-end
+latency (preprocessing, inference, and non-maximum suppression) at batch size 1 over 300--500
+frames held in memory, and re-scored accuracy with each runtime (Table~\ref{tab:thor}).
+TensorRT FP16 runs at 56--57 FPS with accuracy within 0.001 of PyTorch. INT8 adds only about
+4\% throughput, because CPU-side preprocessing and non-maximum suppression dominate the frame
+time, and lowers accuracy slightly, so FP16 is preferred. The engine embeds the prompt
+vocabulary and must be rebuilt (about 2.5 minutes) when the prompts change. All three platforms
+run in real time, and the Thor leaves headroom for additional onboard models.
+
+\begin{table}[hbt!]
+\caption{Real-time inference at 1280$\times$1280. Xavier and Orin Nano: standard 5-epoch model,
+         PyTorch. Thor: end-to-end latency, batch 1, 120~W mode.}
+\label{tab:thor}
+\centering
+\begin{tabular}{llcccc}
+\hline
+\textbf{Platform / model} & \textbf{Runtime} & \textbf{FPS} & \textbf{p99 latency (ms)} & \textbf{VisDrone mAP} & \textbf{OVB novel} \\
+\hline
+Xavier, standard 5 ep    & PyTorch        & 9.4  & -- & -- & -- \\
+Orin Nano, standard 5 ep & PyTorch        & 12.5 & -- & -- & -- \\
+Thor, standard 5 ep      & PyTorch FP32   & 35 & 32.1 & 0.308 & 0.126 \\
+Thor, standard 5 ep      & TensorRT FP16  & 57 & 22.1 & 0.308 & 0.128 \\
+Thor, standard 5 ep      & TensorRT INT8  & 59 & 20.8 & 0.300 & 0.119 \\
+Thor, recommended   & TensorRT FP16  & 56 & 22.0 & 0.297 & 0.247 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[hbt!]
+\centering
+\includegraphics[width=0.75\textwidth]{compare_visdrone_base_rec.jpg}
+\caption{VisDrone-DET validation images~\cite{zhu2021detection} processed by the base model (left) and the recommended
+         model (low learning rate + WiSE-FT, right). Each panel header gives that model's
+         per-image F1 (IoU $\geq$ 0.5, confidence $\geq$ 0.25). The four images were selected
+         as those with the largest F1 gain of the recommended model over the base model, so
+         they illustrate the effect of domain adaptation rather than typical performance.}
+\label{fig:qual_visdrone}
 \end{figure}
 
 \begin{figure}[hbt!]
 \centering
-\begin{subfigure}{0.45\textwidth}
-    \centering
-    \includegraphics[height=4cm, keepaspectratio]{landing_pad_backpack_before_ov_loss.png}
-    \caption{Base YOLOv8m-WorldV2 model.}
-    \label{fig:backpack_base}
-\end{subfigure}
-\hfill
-\begin{subfigure}{0.45\textwidth}
-    \centering
-    \includegraphics[height=4cm, keepaspectratio]{landing_pad_backpack_after_ov_loss.png}
-    \caption{Fine-tuned (5 epoch).}
-    \label{fig:backpack_ft}
-\end{subfigure}
-\caption{Base model (left) vs.\ 5-epoch fine-tuned model (right). 
-         Even short fine-tuning durations reduce detection confidence 
-         on open-vocabulary classes outside the VisDrone distribution.}
-\label{fig:backpack_comparison}
+\includegraphics[width=\textwidth]{compare_ovb_3models.jpg}
+\caption{OVB images captured with our UAS, processed by (left to right) the base model,
+         standard fine-tuning (5 epochs at the default learning rate), and the recommended model. Each panel header gives that
+         model's per-image F1 (IoU $\geq$ 0.5, confidence $\geq$ 0.25). The four images were
+         selected as those with the largest F1 gain of the recommended model over standard
+         fine-tuning, so they illustrate the retained open-vocabulary ability rather than typical
+         performance. Box labels are abbreviated: ``landing pad'' denotes the prompt
+         ``orange circle landing pad.''}
+\label{fig:qual_ovb}
 \end{figure}
 
 \section{Discussion}
 
-The results reveal a clear tradeoff between domain specialization and open-vocabulary retention as fine-tuning duration increases. Despite the CLIP encoder being fully frozen throughout training, 
-open-vocabulary capability degrades rapidly beyond 5 epochs, suggesting that the detection head and neck progressively bias toward VisDrone classes regardless of our attempts to mitigate this. Fig. \ref{fig:backpack_comparison} demonstrates this problem clearly, showing the confidence and detection accuracy on the prompted OVB class "backpack" decreases with finetuning. The 5-epoch checkpoint represents the most practical configuration, achieving +135\% VisDrone mAP improvement while retaining OVB mAP at baseline levels, as demonstrated qualitatively in Fig.~\ref{fig:pedestrian_comparison} where the detection on VisDrone classes, such as "pedestrian", has improved dramatically at the cost of prompted open-vocab classes such as "soccer ball".
+The results reveal a clear tradeoff between domain specialization and open-vocabulary
+retention, but one that depends far more on how the model is fine-tuned than on how long.
+Even with the CLIP text encoder frozen, updating the visual backbone, neck, and detection head
+at the learning rate selected by default degrades detection of unseen categories within a few
+hundred iterations and removes it almost entirely by 40 epochs
+(Figs.~\ref{fig:qual_visdrone} and~\ref{fig:qual_ovb} show both sides of this tradeoff).
+Freezing the text encoder is therefore necessary but not sufficient. Our results point to the
+size of the update in weight space as the governing factor: a lower learning rate keeps the
+visual components close to the pretrained solution over long training, and interpolating back
+toward the pretrained weights recovers most of what is lost. Layer freezing, by contrast,
+restricts which weights move but not how far, and only delays the collapse.
 
-Several limitations bound these findings. The 195-image OVB set is sufficient to establish trends but too small for statistically robust mAP estimates. Only three epoch checkpoints at a fixed learning rate were evaluated, while a systematic hyperparameter search or experiments with partial freezing of the CLIP encoder may yield a more favorable tradeoff than identified here. 
+The benchmark used to measure retention matters: OVB alone overstated how much general ability
+standard fine-tuning keeps, whereas the recommended model's retention holds on LVIS and COCO as
+well, so its gain is not specific to our benchmark. Descriptive noun phrases are the most
+fragile capability. In practice, the descriptive prompt signals that the pad is occupied
+rather than detecting arbitrary objects, consistent with how OVB labels it
+(Section~\ref{sec:ovb}), so it should be paired with an exhaustive list of specific hazard
+prompts.
 
-A practical limitation of this approach is that target classes must be prompted before inference, requiring prior knowledge of potential obstructions. This can be partially addressed using an exhaustive prompt list of common hazard categories and the descriptive prompts to catch more obscure "foreign obstacles". Future work will explore using vision-language models, either cloud-based or compact onboard models such as LiteVLM \cite{huang2025litevlmlowlatencyvisionlanguagemodel}, to dynamically generate prompts from a scene prior to YOLO-World inference, eliminating the need for manual prompt specification.
+Several limitations bound these findings. The 195-image OVB set is small and comes from a
+single site; we mitigate this with bootstrap confidence intervals, three-seed repetitions,
+novel-only reporting, and standard benchmarks, but absolute OVB values should be interpreted
+with caution. Standard-benchmark and learning-rate-grid results are single-seed. The
+image-level obstruction labels are derived from the OVB annotations, and the combined
+obstruction score was defined after inspecting the results; at confidence 0.25 all models
+miss more than half of obstructed pads, so an operational system would require a lower,
+calibrated threshold validated on substantially more data. We did not compare against
+closed-set detectors trained on the same data, and the text encoder could not be partially
+unfrozen in our training framework.
 
-\section{Expected Outcomes}
-
-Prior to final submission, additional experiments will be conducted to further investigate open-vocabulary retention during fine-tuning. Planned approaches include lower learning rates, which online resources suggest may reduce capability degradation, as well as partial freezing of specific CLIP encoder layers or training a separate detection head as alternative mitigation strategies \cite{gandhi2025finetuningforgettingadaptationyolov8}.
-
-Additionally, evaluation will be extended to the LVIS dataset, the benchmark used in the original YOLO-World evaluation, to provide a standardized measure of open-vocabulary degradation relative to the pretrained baseline independent of the OVB set \cite{cheng2024yoloworld}. We will also compare our results with previous work on closed set detectors using YOLOv8 and RT-DETR~\cite{vu2025transformer}.
+A practical limitation of this approach is that target classes must be prompted before
+inference, requiring prior knowledge of potential obstructions. Future work will explore using
+vision-language models, either cloud-based or compact onboard models such as
+LiteVLM~\cite{huang2025litevlmlowlatencyvisionlanguagemodel}, to dynamically generate prompts
+from a scene prior to YOLO-World inference, as well as parameter-efficient fine-tuning and
+replay of pretraining data as further retention strategies.
 
 \section{Conclusion}
 
-This paper presented a fine-tuning methodology for adapting YOLO-World to UAS landing zone obstruction detection and explored the trade-off between VisDrone domain specific accuracy and open vocabulary retention. We demonstrate that open-vocabulary capability collapses rapidly with extended training even under encoder protection. This proves that while freezing the CLIP encoder mitigates the damage, on its own it isn't enough to fully preserve open vocabulary capability. The 5-epoch checkpoint achieves the strongest balance between VisDrone accuracy and open-vocabulary retention, capable of using descriptive noun phrase prompts to detect novel obstructions at inference time, and real-time performance is confirmed on NVIDIA Jetson Xavier and Jetson Orin Nano platforms. These results establish a practical foundation for open-vocabulary obstruction detection in autonomous UAS landing and motivate future work on retention-aware fine-tuning strategies and dynamic prompt generation via vision-language model integration.
+This paper presented a fine-tuning methodology for adapting YOLO-World to UAS landing zone
+obstruction detection and characterized the tradeoff between VisDrone accuracy and
+open-vocabulary retention. Freezing the CLIP text encoder alone is not sufficient: standard
+fine-tuning significantly degrades detection of unseen categories within 5 epochs and
+eliminates it by 40. The learning rate, rather than training duration or layer freezing,
+governs this loss. A low learning rate combined with weight-space ensembling yields a model
+that more than doubles VisDrone accuracy (+137\% mAP@0.5) while retaining 77--78\% of the
+pretrained model's zero-shot accuracy on LVIS and COCO and slightly exceeding it on novel UAS
+obstruction categories. In an exploratory image-level test, combining specific hazard prompts
+with the descriptive landing-pad prompt lets this model identify obstructed landing pads as well
+as the pretrained model with a 3.7$\times$ lower false-alarm rate, and TensorRT deployment reaches 56 FPS at full resolution
+on an NVIDIA Jetson AGX Thor. These results establish a practical foundation for
+open-vocabulary obstruction detection in autonomous UAS landing and motivate future work on
+dynamic prompt generation via vision-language model integration.
 
 % \section*{Acknowledgments}
 

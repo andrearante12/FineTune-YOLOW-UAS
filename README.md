@@ -1,5 +1,21 @@
 # Yolo-World for UAS based Object Detection
 
+## Demo
+
+![Base vs. standard fine-tuning vs. recommended model on a UAS landing flight](docs/media/demo_preview.gif)
+
+*Left to right: the pretrained YOLOv8m-WorldV2 (base), standard fine-tuning on VisDrone (5 epochs), and our
+recommended model (low learning rate + WiSE-FT). Boxes at confidence ≥ 0.25. FO = foreign object.*
+**[Full flight video (MP4)](docs/media/dji0162_base_standard_recommended.mp4)**
+
+| VisDrone: base vs. recommended | Retention tradeoff |
+|:---:|:---:|
+| <img src="paper/compare_visdrone_base_rec.jpg" width="400"> | <img src="paper/retention_tradeoff.png" width="480"> |
+
+**Our UAS benchmark (OVB): base, standard fine-tuning, recommended**
+
+<img src="paper/compare_ovb_3models.jpg" width="900">
+
 ## Overview
 
 The goal of this project was to fine-tune the YOLO World open vocabulary object detection model (https://github.com/AILab-CVC/YOLO-World) with the VisDrone dataset 
